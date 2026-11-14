@@ -191,7 +191,20 @@ async function analyze(file){
   }
   render();
 }
-$('#file').addEventListener('change',async e=>{const fs=[...e.target.files];e.target.value='';
+// ---------- keep the screen on while analysing (Screen Wake Lock) ----------
+let wakeLock=null,wantWake=false,wakeTimer=null;
+async function lockOn(){wantWake=true;if(wakeLock)return true;
+  try{if('wakeLock' in navigator){wakeLock=await navigator.wakeLock.request('screen');wakeLock.addEventListener('release',()=>{wakeLock=null});return true}}catch(e){}
+  return false}
+function lockOff(){wantWake=false;clearTimeout(wakeTimer);if(wakeLock){wakeLock.release().catch(()=>{});wakeLock=null}}
+document.addEventListener('visibilitychange',()=>{if(wantWake&&document.visibilityState==='visible')lockOn()});
+// ask while the tap is still fresh; let go again if no video gets picked
+document.querySelector('.pick').addEventListener('click',()=>{lockOn();clearTimeout(wakeTimer);wakeTimer=setTimeout(()=>{if(!busy)lockOff()},90000)});
+let busy=false;
+$('#file').addEventListener('change',async e=>{const fs=[...e.target.files];e.target.value='';if(!fs.length)return;
+  busy=true;clearTimeout(wakeTimer);const ok=await lockOn();
+  $('#wake').textContent=ok?'解析中は画面が消えないようにしています':'この端末では画面の自動ロックを止められません。解析中はときどき画面に触れてください';
   for(let i=0;i<fs.length;i++){try{if(fs.length>1)$('#batch').textContent=`録画 ${i+1}/${fs.length}`;await analyze(fs[i])}catch(err){$('#status').textContent='エラー: '+err.message}}
+  busy=false;lockOff();$('#wake').textContent='';
   $('#batch').textContent='';$('#status').textContent=`合計${state.items.length}匹`+(state.items.some(i=>!i.species)?'（名前を読めなかったものは入力してください）':'')});
 render();
