@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ポケGO 個体値ランクチェッカー</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1d2329;--sub:#68737d;--line:#e3e7eb;--acc:#2b7de9;--g1:#b8860b;--g2:#1a8a4a;--g3:#2b6cb0;--g4:#7a848d}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+header{padding:18px 16px 8px}h1{font-size:19px;margin:0 0 4px}header p{margin:0;color:var(--sub);font-size:13px;line-height:1.5}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 16px 12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+.pick{background:var(--acc);color:#fff;border-radius:10px;padding:11px 16px;font-weight:600;font-size:15px;cursor:pointer}
+.pick input{display:none}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;margin-left:auto}
+.seg span{font-size:12px;color:var(--sub);padding:0 8px;align-self:center}
+.lvbtn{border:0;background:none;padding:8px 10px;font-size:13px;color:var(--sub)}.lvbtn.on{background:var(--acc);color:#fff}
+.sm{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;font-size:13px;color:var(--ink)}
+#status{padding:8px 16px 0;font-size:13px;color:var(--sub);min-height:18px}
+#progwrap{margin:6px 16px 0;height:6px;background:var(--line);border-radius:3px;overflow:hidden}#prog{height:100%;background:var(--acc);width:0}
+#list{padding:10px 12px 40px;display:flex;flex-direction:column;gap:12px}
+#empty{margin:24px 16px;padding:16px;border:1px dashed #c5ccd3;border-radius:12px;color:var(--sub);font-size:14px;line-height:1.7}
+.card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:visible}
+.top{display:flex;gap:10px;padding:10px;position:relative}
+.top img,.noimg{width:96px;border-radius:9px;flex:none;object-fit:cover;align-self:flex-start}
+.noimg{height:72px;background:var(--line);display:grid;place-items:center;font-size:12px;color:var(--sub)}
+.meta{flex:1;min-width:0}
+.ivs{display:flex;gap:6px}
+.iv{display:flex;flex-direction:column;font-size:11px;color:var(--sub);gap:2px}
+.iv select{font-size:16px;font-weight:600;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);min-width:52px}
+.sp{position:relative;margin-top:8px}
+.sp input{width:100%;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.sug{position:absolute;left:0;right:0;top:100%;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);z-index:9}
+.sug:empty{display:none}
+.sug button{display:block;width:100%;text-align:left;border:0;background:none;padding:10px 12px;font-size:15px;border-bottom:1px solid var(--line)}
+.splabel{font-size:11px;color:var(--sub);margin-bottom:3px}.sp input.need{border:2px solid #f0a040;background:#fff8ee}.forms{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.forms button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:3px 9px;font-size:12px;color:var(--sub)}.forms button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tm{font-size:11px;color:var(--sub);margin-top:6px}
+.del{position:absolute;top:6px;right:6px;border:0;background:none;font-size:20px;color:#a0a8b0;width:30px;height:30px}
+.hint{margin:0;padding:0 12px 12px;font-size:13px;color:var(--sub)}
+.rk{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.rk th,.rk td{padding:7px 4px;border-top:1px solid var(--line);text-align:center;vertical-align:top}
+.rk thead th{font-size:11px;color:var(--sub);font-weight:600}
+.rk tbody th{text-align:left;padding-left:10px;font-weight:600;font-size:12px;word-break:break-all;width:27%}
+.rk td b{display:block;font-size:15px}.rk td small{display:block;color:var(--sub);font-size:10.5px;line-height:1.35}
+.na{color:#b0b7be}
+.r1{color:var(--g1)}.r2{color:var(--g2)}.r3{color:var(--g3)}.r4{color:var(--g4)}
+.legend{font-size:11px;color:var(--sub);padding:0 16px}
+.legend b{font-weight:600}
+</style></head><body>
+<header><h1>個体値ランクチェッカー <small style="font-size:11px;color:#8a949c;font-weight:400">v4</small></h1><p>ポケモンGOの「評価」画面を画面収録した動画から個体値を読み取り、スーパー・ハイパー・マスターで4096通り中何位かを進化先も含めて表示します。動画はこの端末の中だけで処理されます。</p></header>
+<div class="bar">
+<label class="pick">録画を選ぶ<input id="file" type="file" accept="video/*"></label>
+<button class="sm" id="add">手入力</button><button class="sm" id="clear">クリア</button>
+<div class="seg"><span>Lv上限</span><button class="lvbtn" data-lv="50">50</button><button class="lvbtn" data-lv="51">51</button></div>
+</div>
+<div id="status"></div><div id="diag" style="padding:4px 16px 0;font-size:11px;color:#8a949c"></div><div id="progwrap" style="display:none"><div id="prog"></div></div>
+<div id="empty"><b>使い方</b><br>1. ポケGOで画面収録を開始<br>2. ポケモンを開いて「評価」→バーが出たら1〜2秒待つ<br>3. 評価を開いたまま左右スワイプで次のポケモンへ<br>4. 録画を止めて「録画を選ぶ」から選択<br><br>順位はステータス積（攻撃×防御×HP）で比較しています。Lv上限51は相棒ボーナス込みです。</div>
+<p class="legend"><b class="r1">■</b>10位以内 <b class="r2">■</b>100位以内 <b class="r3">■</b>500位以内　%は1位比のステータス積</p>
+<div id="list"></div>
+<script>const JA_NAMES="フシギダネ,フシギソウ,フシギバナ,ヒトカゲ,リザード,リザードン,ゼニガメ,カメール,カメックス,キャタピー,トランセル,バタフリー,ビードル,コクーン,スピアー,ポッポ,ピジョン,ピジョット,コラッタ,ラッタ,オニスズメ,オニドリル,アーボ,アーボック,ピカチュウ,ライチュウ,サンド,サンドパン,ニドラン♀,ニドリーナ,ニドクイン,ニドラン♂,ニドリーノ,ニドキング,ピッピ,ピクシー,ロコン,キュウコン,プリン,プクリン,ズバット,ゴルバット,ナゾノクサ,クサイハナ,ラフレシア,パラス,パラセクト,コンパン,モルフォン,ディグダ,ダグトリオ,ニャース,ペルシアン,コダック,ゴルダック,マンキー,オコリザル,ガーディ,ウインディ,ニョロモ,ニョロゾ,ニョロボン,ケーシィ,ユンゲラー,フーディン,ワンリキー,ゴーリキー,カイリキー,マダツボミ,ウツドン,ウツボット,メノクラゲ,ドククラゲ,イシツブテ,ゴローン,ゴローニャ,ポニータ,ギャロップ,ヤドン,ヤドラン,コイル,レアコイル,カモネギ,ドードー,ドードリオ,パウワウ,ジュゴン,ベトベター,ベトベトン,シェルダー,パルシェン,ゴース,ゴースト,ゲンガー,イワーク,スリープ,スリーパー,クラブ,キングラー,ビリリダマ,マルマイン,タマタマ,ナッシー,カラカラ,ガラガラ,サワムラー,エビワラー,ベロリンガ,ドガース,マタドガス,サイホーン,サイドン,ラッキー,モンジャラ,ガルーラ,タッツー,シードラ,トサキント,アズマオウ,ヒトデマン,スターミー,バリヤード,ストライク,ルージュラ,エレブー,ブーバー,カイロス,ケンタロス,コイキング,ギャラドス,ラプラス,メタモン,イーブイ,シャワーズ,サンダース,ブースター,ポリゴン,オムナイト,オムスター,カブト,カブトプス,プテラ,カビゴン,フリーザー,サンダー,ファイヤー,ミニリュウ,ハクリュー,カイリュー,ミュウツー,ミュウ,チコリータ,ベイリーフ,メガニウム,ヒノアラシ,マグマラシ,バクフーン,ワニノコ,アリゲイツ,オーダイル,オタチ,オオタチ,ホーホー,ヨルノズク,レディバ,レディアン,イトマル,アリアドス,クロバット,チョンチー,ランターン,ピチュー,ピィ,ププリン,トゲピー,トゲチック,ネイティ,ネイティオ,メリープ,モココ,デンリュウ,キレイハナ,マリル,マリルリ,ウソッキー,ニョロトノ,ハネッコ,ポポッコ,ワタッコ,エイパム,ヒマナッツ,キマワリ,ヤンヤンマ,ウパー,ヌオー,エーフィ,ブラッキー,ヤミカラス,ヤドキング,ムウマ,アンノーン,ソーナンス,キリンリキ,クヌギダマ,フォレトス,ノコッチ,グライガー,ハガネール,ブルー,グランブル,ハリーセン,ハッサム,ツボツボ,ヘラクロス,ニューラ,ヒメグマ,リングマ,マグマッグ,マグカルゴ,ウリムー,イノムー,サニーゴ,テッポウオ,オクタン,デリバード,マンタイン,エアームド,デルビル,ヘルガー,キングドラ,ゴマゾウ,ドンファン,ポリゴン２,オドシシ,ドーブル,バルキー,カポエラー,ムチュール,エレキッド,ブビィ,ミルタンク,ハピナス,ライコウ,エンテイ,スイクン,ヨーギラス,サナギラス,バンギラス,ルギア,ホウオウ,セレビィ,キモリ,ジュプトル,ジュカイン,アチャモ,ワカシャモ,バシャーモ,ミズゴロウ,ヌマクロー,ラグラージ,ポチエナ,グラエナ,ジグザグマ,マッスグマ,ケムッソ,カラサリス,アゲハント,マユルド,ドクケイル,ハスボー,ハスブレロ,ルンパッパ,タネボー,コノハナ,ダーテング,スバメ,オオスバメ,キャモメ,ペリッパー,ラルトス,キルリア,サーナイト,アメタマ,アメモース,キノココ,キノガッサ,ナマケロ,ヤルキモノ,ケッキング,ツチニン,テッカニン,ヌケニン,ゴニョニョ,ドゴーム,バクオング,マクノシタ,ハリテヤマ,ルリリ,ノズパス,エネコ,エネコロロ,ヤミラミ,クチート,ココドラ,コドラ,ボスゴドラ,アサナン,チャーレム,ラクライ,ライボルト,プラスル,マイナン,バルビート,イルミーゼ,ロゼリア,ゴクリン,マルノーム,キバニア,サメハダー,ホエルコ,ホエルオー,ドンメル,バクーダ,コータス,バネブー,ブーピッグ,パッチール,ナックラー,ビブラーバ,フライゴン,サボネア,ノクタス,チルット,チルタリス,ザングース,ハブネーク,ルナトーン,ソルロック,ドジョッチ,ナマズン,ヘイガニ,シザリガー,ヤジロン,ネンドール,リリーラ,ユレイドル,アノプス,アーマルド,ヒンバス,ミロカロス,ポワルン,カクレオン,カゲボウズ,ジュペッタ,ヨマワル,サマヨール,トロピウス,チリーン,アブソル,ソーナノ,ユキワラシ,オニゴーリ,タマザラシ,トドグラー,トドゼルガ,パールル,ハンテール,サクラビス,ジーランス,ラブカス,タツベイ,コモルー,ボーマンダ,ダンバル,メタング,メタグロス,レジロック,レジアイス,レジスチル,ラティアス,ラティオス,カイオーガ,グラードン,レックウザ,ジラーチ,デオキシス,ナエトル,ハヤシガメ,ドダイトス,ヒコザル,モウカザル,ゴウカザル,ポッチャマ,ポッタイシ,エンペルト,ムックル,ムクバード,ムクホーク,ビッパ,ビーダル,コロボーシ,コロトック,コリンク,ルクシオ,レントラー,スボミー,ロズレイド,ズガイドス,ラムパルド,タテトプス,トリデプス,ミノムッチ,ミノマダム,ガーメイル,ミツハニー,ビークイン,パチリス,ブイゼル,フローゼル,チェリンボ,チェリム,カラナクシ,トリトドン,エテボース,フワンテ,フワライド,ミミロル,ミミロップ,ムウマージ,ドンカラス,ニャルマー,ブニャット,リーシャン,スカンプー,スカタンク,ドーミラー,ドータクン,ウソハチ,マネネ,ピンプク,ペラップ,ミカルゲ,フカマル,ガバイト,ガブリアス,ゴンベ,リオル,ルカリオ,ヒポポタス,カバルドン,スコルピ,ドラピオン,グレッグル,ドクロッグ,マスキッパ,ケイコウオ,ネオラント,タマンタ,ユキカブリ,ユキノオー,マニューラ,ジバコイル,ベロベルト,ドサイドン,モジャンボ,エレキブル,ブーバーン,トゲキッス,メガヤンマ,リーフィア,グレイシア,グライオン,マンムー,ポリゴンＺ,エルレイド,ダイノーズ,ヨノワール,ユキメノコ,ロトム,ユクシー,エムリット,アグノム,ディアルガ,パルキア,ヒードラン,レジギガス,ギラティナ,クレセリア,フィオネ,マナフィ,ダークライ,シェイミ,アルセウス,ビクティニ,ツタージャ,ジャノビー,ジャローダ,ポカブ,チャオブー,エンブオー,ミジュマル,フタチマル,ダイケンキ,ミネズミ,ミルホッグ,ヨーテリー,ハーデリア,ムーランド,チョロネコ,レパルダス,ヤナップ,ヤナッキー,バオップ,バオッキー,ヒヤップ,ヒヤッキー,ムンナ,ムシャーナ,マメパト,ハトーボー,ケンホロウ,シママ,ゼブライカ,ダンゴロ,ガントル,ギガイアス,コロモリ,ココロモリ,モグリュー,ドリュウズ,タブンネ,ドッコラー,ドテッコツ,ローブシン,オタマロ,ガマガル,ガマゲロゲ,ナゲキ,ダゲキ,クルミル,クルマユ,ハハコモリ,フシデ,ホイーガ,ペンドラー,モンメン,エルフーン,チュリネ,ドレディア,バスラオ,メグロコ,ワルビル,ワルビアル,ダルマッカ,ヒヒダルマ,マラカッチ,イシズマイ,イワパレス,ズルッグ,ズルズキン,シンボラー,デスマス,デスカーン,プロトーガ,アバゴーラ,アーケン,アーケオス,ヤブクロン,ダストダス,ゾロア,ゾロアーク,チラーミィ,チラチーノ,ゴチム,ゴチミル,ゴチルゼル,ユニラン,ダブラン,ランクルス,コアルヒー,スワンナ,バニプッチ,バニリッチ,バイバニラ,シキジカ,メブキジカ,エモンガ,カブルモ,シュバルゴ,タマゲタケ,モロバレル,プルリル,ブルンゲル,ママンボウ,バチュル,デンチュラ,テッシード,ナットレイ,ギアル,ギギアル,ギギギアル,シビシラス,シビビール,シビルドン,リグレー,オーベム,ヒトモシ,ランプラー,シャンデラ,キバゴ,オノンド,オノノクス,クマシュン,ツンベアー,フリージオ,チョボマキ,アギルダー,マッギョ,コジョフー,コジョンド,クリムガン,ゴビット,ゴルーグ,コマタナ,キリキザン,バッフロン,ワシボン,ウォーグル,バルチャイ,バルジーナ,クイタラン,アイアント,モノズ,ジヘッド,サザンドラ,メラルバ,ウルガモス,コバルオン,テラキオン,ビリジオン,トルネロス,ボルトロス,レシラム,ゼクロム,ランドロス,キュレム,ケルディオ,メロエッタ,ゲノセクト,ハリマロン,ハリボーグ,ブリガロン,フォッコ,テールナー,マフォクシー,ケロマツ,ゲコガシラ,ゲッコウガ,ホルビー,ホルード,ヤヤコマ,ヒノヤコマ,ファイアロー,コフキムシ,コフーライ,ビビヨン,シシコ,カエンジシ,フラベベ,フラエッテ,フラージェス,メェークル,ゴーゴート,ヤンチャム,ゴロンダ,トリミアン,ニャスパー,ニャオニクス,ヒトツキ,ニダンギル,ギルガルド,シュシュプ,フレフワン,ペロッパフ,ペロリーム,マーイーカ,カラマネロ,カメテテ,ガメノデス,クズモー,ドラミドロ,ウデッポウ,ブロスター,エリキテル,エレザード,チゴラス,ガチゴラス,アマルス,アマルルガ,ニンフィア,ルチャブル,デデンネ,メレシー,ヌメラ,ヌメイル,ヌメルゴン,クレッフィ,ボクレー,オーロット,バケッチャ,パンプジン,カチコール,クレベース,オンバット,オンバーン,ゼルネアス,イベルタル,ジガルデ,ディアンシー,フーパ,ボルケニオン,モクロー,フクスロー,ジュナイパー,ニャビー,ニャヒート,ガオガエン,アシマリ,オシャマリ,アシレーヌ,ツツケラ,ケララッパ,ドデカバシ,ヤングース,デカグース,アゴジムシ,デンヂムシ,クワガノン,マケンカニ,ケケンカニ,オドリドリ,アブリー,アブリボン,イワンコ,ルガルガン,ヨワシ,ヒドイデ,ドヒドイデ,ドロバンコ,バンバドロ,シズクモ,オニシズクモ,カリキリ,ラランテス,ネマシュ,マシェード,ヤトウモリ,エンニュート,ヌイコグマ,キテルグマ,アマカジ,アママイコ,アマージョ,キュワワー,ヤレユータン,ナゲツケサル,コソクムシ,グソクムシャ,スナバァ,シロデスナ,ナマコブシ,タイプ：ヌル,シルヴァディ,メテノ,ネッコアラ,バクガメス,トゲデマル,ミミッキュ,ハギギシリ,ジジーロン,ダダリン,ジャラコ,ジャランゴ,ジャラランガ,カプ・コケコ,カプ・テテフ,カプ・ブルル,カプ・レヒレ,コスモッグ,コスモウム,ソルガレオ,ルナアーラ,ウツロイド,マッシブーン,フェローチェ,デンジュモク,テッカグヤ,カミツルギ,アクジキング,ネクロズマ,マギアナ,マーシャドー,ベベノム,アーゴヨン,ツンデツンデ,ズガドーン,ゼラオラ,メルタン,メルメタル,サルノリ,バチンキー,ゴリランダー,ヒバニー,ラビフット,エースバーン,メッソン,ジメレオン,インテレオン,ホシガリス,ヨクバリス,ココガラ,アオガラス,アーマーガア,サッチムシ,レドームシ,イオルブ,クスネ,フォクスライ,ヒメンカ,ワタシラガ,ウールー,バイウールー,カムカメ,カジリガメ,ワンパチ,パルスワン,タンドン,トロッゴン,セキタンザン,カジッチュ,アップリュー,タルップル,スナヘビ,サダイジャ,ウッウ,サシカマス,カマスジョー,エレズン,ストリンダー,ヤクデ,マルヤクデ,タタッコ,オトスパス,ヤバチャ,ポットデス,ミブリム,テブリム,ブリムオン,ベロバー,ギモー,オーロンゲ,タチフサグマ,ニャイキング,サニゴーン,ネギガナイト,バリコオル,デスバーン,マホミル,マホイップ,タイレーツ,バチンウニ,ユキハミ,モスノウ,イシヘンジン,コオリッポ,イエッサン,モルペコ,ゾウドウ,ダイオウドウ,パッチラゴン,パッチルドン,ウオノラゴン,ウオチルドン,ジュラルドン,ドラメシヤ,ドロンチ,ドラパルト,ザシアン,ザマゼンタ,ムゲンダイナ,ダクマ,ウーラオス,ザルード,レジエレキ,レジドラゴ,ブリザポス,レイスポス,バドレックス,アヤシシ,バサギリ,ガチグマ,イダイトウ,オオニューラ,ハリーマン,ラブトロス,ニャオハ,ニャローテ,マスカーニャ,ホゲータ,アチゲータ,ラウドボーン,クワッス,ウェルカモ,ウェーニバル,グルトン,パフュートン,タマンチュラ,ワナイダー,マメバッタ,エクスレッグ,パモ,パモット,パーモット,ワッカネズミ,イッカネズミ,パピモッチ,バウッツェル,ミニーブ,オリーニョ,オリーヴァ,イキリンコ,コジオ,ジオヅム,キョジオーン,カルボウ,グレンアルマ,ソウブレイズ,ズピカ,ハラバリー,カイデン,タイカイデン,オラチフ,マフィティフ,シルシュルー,タギングル,アノクサ,アノホラグサ,ノノクラゲ,リククラゲ,ガケガニ,カプサイジ,スコヴィラン,シガロコ,ベラカス,ヒラヒナ,クエスパトラ,カヌチャン,ナカヌチャン,デカヌチャン,ウミディグダ,ウミトリオ,オトシドリ,ナミイルカ,イルカマン,ブロロン,ブロロローム,モトトカゲ,ミミズズ,キラーメ,キラフロル,ボチ,ハカドッグ,カラミンゴ,アルクジラ,ハルクジラ,ミガルーサ,ヘイラッシャ,シャリタツ,コノヨザル,ドオー,リキキリン,ノココッチ,ドドゲザン,イダイナキバ,サケブシッポ,アラブルタケ,ハバタクカミ,チヲハウハネ,スナノケガワ,テツノワダチ,テツノツツミ,テツノカイナ,テツノコウベ,テツノドクガ,テツノイバラ,セビエ,セゴール,セグレイブ,コレクレー,サーフゴー,チオンジェン,パオジアン,ディンルー,イーユイ,トドロクツキ,テツノブジン,コライドン,ミライドン,ウネルミナモ,テツノイサハ,カミッチュ,チャデス,ヤバソチャ,イイネイヌ,マシマシラ,キチキギス,オーガポン,ブリジュラス,カミツオロチ,ウガツホムラ,タケルライコ,テツノイワオ,テツノカシラ,テラパゴス,モモワロウ".split(',');
+// dex|id|form|atk|def|hp|evolutions  (source: PvPoke game master)
+const GM=`1|bulbasaur||118|111|128|ivysaur
+2|ivysaur||151|143|155|venusaur
+3|venusaur||198|189|190|
+4|charmander||116|93|118|charmeleon
+5|charmeleon||158|126|151|charizard
+6|charizard||223|173|186|
+7|squirtle||94|121|127|wartortle
+8|wartortle||126|155|153|blastoise
+9|blastoise||171|207|188|
+10|caterpie||55|55|128|metapod
+11|metapod||45|80|137|butterfree
+12|butterfree||167|137|155|
+13|weedle||63|50|120|kakuna
+14|kakuna||46|75|128|beedrill
+15|beedrill||169|130|163|
+16|pidgey||85|73|120|pidgeotto
+17|pidgeotto||117|105|160|pidgeot
+18|pidgeot||166|154|195|
+19|rattata||103|70|102|raticate
+19|rattata_alolan|Alolan|103|70|102|raticate_alolan
+20|raticate||161|139|146|
+20|raticate_alolan|Alolan|135|154|181|
+21|spearow||112|60|120|fearow
+22|fearow||182|133|163|
+23|ekans||110|97|111|arbok
+24|arbok||167|153|155|
+25|pikachu||112|96|111|raichu+raichu_alolan
+26|raichu||193|151|155|
+26|raichu_alolan|Alolan|201|154|155|
+27|sandshrew||126|120|137|sandslash
+27|sandshrew_alolan|Alolan|125|129|137|sandslash_alolan
+28|sandslash||182|175|181|
+28|sandslash_alolan|Alolan|177|195|181|
+29|nidoran_female||86|89|146|nidorina
+30|nidorina||117|120|172|nidoqueen
+31|nidoqueen||180|173|207|
+32|nidoran_male||105|76|130|nidorino
+33|nidorino||137|111|156|nidoking
+34|nidoking||204|156|191|
+35|clefairy||107|108|172|clefable
+36|clefable||178|162|216|
+37|vulpix||96|109|116|ninetales
+37|vulpix_alolan|Alolan|96|109|116|ninetales_alolan
+38|ninetales||169|190|177|
+38|ninetales_alolan|Alolan|170|193|177|
+39|jigglypuff||80|41|251|wigglytuff
+40|wigglytuff||156|90|295|
+41|zubat||83|73|120|golbat
+42|golbat||161|150|181|crobat
+43|oddish||131|112|128|gloom
+44|gloom||153|136|155|vileplume+bellossom
+45|vileplume||202|167|181|
+46|paras||121|99|111|parasect
+47|parasect||165|146|155|
+48|venonat||100|100|155|venomoth
+49|venomoth||179|143|172|
+50|diglett||109|78|67|dugtrio
+50|diglett_alolan|Alolan|108|81|67|dugtrio_alolan
+51|dugtrio||167|136|111|
+51|dugtrio_alolan|Alolan|201|142|111|
+52|meowth||92|78|120|persian
+52|meowth_alolan|Alolan|99|78|120|persian_alolan
+52|meowth_galarian|Galarian|115|92|137|perrserker
+53|persian||150|136|163|
+53|persian_alolan|Alolan|158|136|163|
+54|psyduck||122|95|137|golduck
+55|golduck||191|162|190|
+56|mankey||148|82|120|primeape
+57|primeape||207|138|163|annihilape
+58|growlithe||136|93|146|arcanine
+58|growlithe_hisuian|Hisuian|142|92|155|arcanine_hisuian
+59|arcanine||227|166|207|
+59|arcanine_hisuian|Hisuian|232|165|216|
+60|poliwag||101|82|120|poliwhirl
+61|poliwhirl||130|123|163|poliwrath+politoed
+62|poliwrath||182|184|207|
+63|abra||195|82|93|kadabra
+64|kadabra||232|117|120|alakazam
+65|alakazam||271|167|146|
+66|machop||137|82|172|machoke
+67|machoke||177|125|190|machamp
+68|machamp||234|159|207|
+69|bellsprout||139|61|137|weepinbell
+70|weepinbell||172|92|163|victreebel
+71|victreebel||207|135|190|
+72|tentacool||97|149|120|tentacruel
+73|tentacruel||166|209|190|
+74|geodude||132|132|120|graveler
+74|geodude_alolan|Alolan|132|132|120|graveler_alolan
+75|graveler||164|164|146|golem
+75|graveler_alolan|Alolan|164|164|146|golem_alolan
+76|golem||211|198|190|
+76|golem_alolan|Alolan|211|198|190|
+77|ponyta||170|127|137|rapidash
+77|ponyta_galarian|Galarian|170|127|137|rapidash_galarian
+78|rapidash||207|162|163|
+78|rapidash_galarian|Galarian|207|162|163|
+79|slowpoke||109|98|207|slowbro+slowking
+79|slowpoke_galarian|Galarian|109|98|207|slowbro_galarian+slowking_galarian
+80|slowbro||177|180|216|
+80|slowbro_galarian|Galarian|182|156|216|
+81|magnemite||165|121|93|magneton
+82|magneton||223|169|137|magnezone
+83|farfetchd||124|115|141|
+83|farfetchd_galarian|Galarian|174|114|141|sirfetchd
+84|doduo||158|83|111|dodrio
+85|dodrio||218|140|155|
+86|seel||85|121|163|dewgong
+87|dewgong||139|177|207|
+88|grimer||135|90|190|muk
+88|grimer_alolan|Alolan|135|90|190|muk_alolan
+89|muk||190|172|233|
+89|muk_alolan|Alolan|190|172|233|
+90|shellder||116|134|102|cloyster
+91|cloyster||186|256|137|
+92|gastly||186|67|102|haunter
+93|haunter||223|107|128|gengar
+94|gengar||261|149|155|
+95|onix||85|232|111|steelix
+96|drowzee||89|136|155|hypno
+97|hypno||144|193|198|
+98|krabby||181|124|102|kingler
+99|kingler||240|181|146|
+100|voltorb||109|111|120|electrode
+100|voltorb_hisuian|Hisuian|109|111|120|electrode_hisuian
+101|electrode||173|173|155|
+101|electrode_hisuian|Hisuian|176|176|155|
+102|exeggcute||107|125|155|exeggutor+exeggutor_alolan
+103|exeggutor||233|149|216|
+103|exeggutor_alolan|Alolan|230|153|216|
+104|cubone||90|144|137|marowak+marowak_alolan
+105|marowak||144|186|155|
+105|marowak_alolan|Alolan|144|186|155|
+106|hitmonlee||224|181|137|
+107|hitmonchan||193|197|137|
+108|lickitung||108|137|207|lickilicky
+109|koffing||119|141|120|weezing+weezing_galarian
+110|weezing||174|197|163|
+110|weezing_galarian|Galarian|174|197|163|
+111|rhyhorn||140|127|190|rhydon
+112|rhydon||222|171|233|rhyperior
+113|chansey||60|128|487|blissey
+114|tangela||183|169|163|tangrowth
+115|kangaskhan||181|165|233|
+116|horsea||129|103|102|seadra
+117|seadra||187|156|146|kingdra
+118|goldeen||123|110|128|seaking
+119|seaking||175|147|190|
+120|staryu||137|112|102|starmie
+121|starmie||210|184|155|
+122|mr_mime||192|205|120|
+122|mr_mime_galarian|Galarian|183|169|137|mr_rime
+123|scyther||218|170|172|scizor+kleavor
+124|jynx||223|151|163|
+125|electabuzz||198|158|163|electivire
+126|magmar||206|154|163|magmortar
+127|pinsir||238|182|163|
+128|tauros||198|183|181|
+128|tauros_aqua|Aqua|210|193|181|
+128|tauros_blaze|Blaze|210|193|181|
+128|tauros_combat|Combat|210|193|181|
+129|magikarp||29|85|85|gyarados
+130|gyarados||237|186|216|
+131|lapras||165|174|277|
+133|eevee||104|114|146|vaporeon+jolteon+flareon+espeon+umbreon+leafeon+glaceon+sylveon
+134|vaporeon||205|161|277|
+135|jolteon||232|182|163|
+136|flareon||246|179|163|
+137|porygon||153|136|163|porygon2
+138|omanyte||155|153|111|omastar
+139|omastar||207|201|172|
+140|kabuto||148|140|102|kabutops
+141|kabutops||220|186|155|
+142|aerodactyl||221|159|190|
+143|snorlax||190|169|330|
+144|articuno||192|236|207|
+144|articuno_galarian|Galarian|250|197|207|
+145|zapdos||253|185|207|
+145|zapdos_galarian|Galarian|252|189|207|
+146|moltres||251|181|207|
+146|moltres_galarian|Galarian|202|231|207|
+147|dratini||119|91|121|dragonair
+148|dragonair||163|135|156|dragonite
+149|dragonite||263|198|209|
+150|mewtwo||300|182|214|
+150|mewtwo_armored|Armored|182|278|214|
+151|mew||210|210|225|
+152|chikorita||92|122|128|bayleef
+153|bayleef||122|155|155|meganium
+154|meganium||168|202|190|
+155|cyndaquil||116|93|118|quilava
+156|quilava||158|126|151|typhlosion
+157|typhlosion||223|173|186|
+157|typhlosion_hisuian|Hisuian|238|172|177|
+158|totodile||117|109|137|croconaw
+159|croconaw||150|142|163|feraligatr
+160|feraligatr||205|188|198|
+161|sentret||79|73|111|furret
+162|furret||148|125|198|
+163|hoothoot||67|88|155|noctowl
+164|noctowl||145|156|225|
+165|ledyba||72|118|120|ledian
+166|ledian||107|179|146|
+167|spinarak||105|73|120|ariados
+168|ariados||161|124|172|
+169|crobat||194|178|198|
+170|chinchou||106|97|181|lanturn
+171|lanturn||146|137|268|
+172|pichu||77|53|85|pikachu
+173|cleffa||75|79|137|clefairy
+174|igglybuff||69|32|207|jigglypuff
+175|togepi||67|116|111|togetic
+176|togetic||139|181|146|togekiss
+177|natu||134|89|120|xatu
+178|xatu||192|146|163|
+179|mareep||114|79|146|flaaffy
+180|flaaffy||145|109|172|ampharos
+181|ampharos||211|169|207|
+182|bellossom||169|186|181|
+183|marill||37|93|172|azumarill
+184|azumarill||112|152|225|
+185|sudowoodo||167|176|172|
+186|politoed||174|179|207|
+187|hoppip||67|94|111|skiploom
+188|skiploom||91|120|146|jumpluff
+189|jumpluff||118|183|181|
+190|aipom||136|112|146|ambipom
+191|sunkern||55|55|102|sunflora
+192|sunflora||185|135|181|
+193|yanma||154|94|163|yanmega
+194|wooper||75|66|146|quagsire
+194|wooper_paldean|Paldean|75|66|146|clodsire
+195|quagsire||152|143|216|
+196|espeon||261|175|163|
+197|umbreon||126|240|216|
+198|murkrow||175|87|155|honchkrow
+199|slowking||177|180|216|
+199|slowking_galarian|Galarian|190|180|216|
+200|misdreavus||167|154|155|mismagius
+201|unown||136|91|134|
+202|wobbuffet||60|106|382|
+203|girafarig||182|133|172|
+204|pineco||108|122|137|forretress
+205|forretress||161|205|181|
+206|dunsparce||131|128|225|dudunsparce
+207|gligar||143|184|163|gliscor
+208|steelix||148|272|181|
+209|snubbull||137|85|155|granbull
+210|granbull||212|131|207|
+211|qwilfish||184|138|163|
+211|qwilfish_hisuian|Hisuian|184|151|163|overqwil
+212|scizor||236|181|172|
+213|shuckle||17|396|85|
+214|heracross||234|179|190|
+215|sneasel||189|146|146|weavile
+215|sneasel_hisuian|Hisuian|189|146|146|sneasler
+216|teddiursa||142|93|155|ursaring
+217|ursaring||236|144|207|ursaluna
+218|slugma||118|71|120|magcargo
+219|magcargo||139|191|137|
+220|swinub||90|69|137|piloswine
+221|piloswine||181|138|225|mamoswine
+222|corsola||118|156|146|
+222|corsola_galarian|Galarian|116|182|155|cursola
+223|remoraid||127|69|111|octillery
+224|octillery||197|141|181|
+225|delibird||128|90|128|
+226|mantine||148|226|163|
+227|skarmory||148|226|163|
+228|houndour||152|83|128|houndoom
+229|houndoom||224|144|181|
+230|kingdra||194|194|181|
+231|phanpy||107|98|207|donphan
+232|donphan||214|185|207|
+233|porygon2||198|180|198|porygon_z
+234|stantler||192|131|177|wyrdeer
+235|smeargle||40|83|146|
+236|tyrogue||64|64|111|hitmonlee+hitmonchan+hitmontop
+237|hitmontop||173|207|137|
+238|smoochum||153|91|128|jynx
+239|elekid||135|101|128|electabuzz
+240|magby||151|99|128|magmar
+241|miltank||157|193|216|
+242|blissey||129|169|496|
+243|raikou||241|195|207|
+244|entei||235|171|251|
+245|suicune||180|235|225|
+246|larvitar||115|93|137|pupitar
+247|pupitar||155|133|172|tyranitar
+248|tyranitar||251|207|225|
+249|lugia||193|310|235|
+250|ho_oh||239|244|214|
+251|celebi||210|210|225|
+252|treecko||124|94|120|grovyle
+253|grovyle||172|120|137|sceptile
+254|sceptile||223|169|172|
+255|torchic||130|87|128|combusken
+256|combusken||163|115|155|blaziken
+257|blaziken||240|141|190|
+258|mudkip||126|93|137|marshtomp
+259|marshtomp||156|133|172|swampert
+260|swampert||208|175|225|
+261|poochyena||96|61|111|mightyena
+262|mightyena||171|132|172|
+263|zigzagoon||58|80|116|linoone
+263|zigzagoon_galarian|Galarian|58|80|116|linoone_galarian
+264|linoone||142|128|186|
+264|linoone_galarian|Galarian|142|128|186|obstagoon
+265|wurmple||75|59|128|silcoon+cascoon
+266|silcoon||60|77|137|beautifly
+267|beautifly||189|98|155|
+268|cascoon||60|77|137|dustox
+269|dustox||98|162|155|
+270|lotad||71|77|120|lombre
+271|lombre||112|119|155|ludicolo
+272|ludicolo||173|176|190|
+273|seedot||71|77|120|nuzleaf
+274|nuzleaf||134|78|172|shiftry
+275|shiftry||200|121|207|
+276|taillow||106|61|120|swellow
+277|swellow||185|124|155|
+278|wingull||106|61|120|pelipper
+279|pelipper||175|174|155|
+280|ralts||79|59|99|kirlia
+281|kirlia||117|90|116|gallade+gardevoir
+282|gardevoir||237|195|169|
+283|surskit||93|87|120|masquerain
+284|masquerain||192|150|172|
+285|shroomish||74|110|155|breloom
+286|breloom||241|144|155|
+287|slakoth||104|92|155|vigoroth
+288|vigoroth||159|145|190|slaking
+289|slaking||290|166|284|
+290|nincada||80|126|104|ninjask
+291|ninjask||199|112|156|
+293|whismur||92|42|162|loudred
+294|loudred||134|81|197|exploud
+295|exploud||179|137|232|
+296|makuhita||99|54|176|hariyama
+297|hariyama||209|114|302|
+298|azurill||36|71|137|marill
+299|nosepass||82|215|102|probopass
+300|skitty||84|79|137|delcatty
+301|delcatty||132|127|172|
+302|sableye||141|136|137|
+303|mawile||155|141|137|
+304|aron||121|141|137|lairon
+305|lairon||158|198|155|aggron
+306|aggron||198|257|172|
+307|meditite||78|107|102|medicham
+308|medicham||121|152|155|
+309|electrike||123|78|120|manectric
+310|manectric||215|127|172|
+311|plusle||167|129|155|
+312|minun||147|150|155|
+313|volbeat||143|166|163|
+314|illumise||143|166|163|
+315|roselia||186|131|137|roserade
+316|gulpin||80|99|172|swalot
+317|swalot||140|159|225|
+318|carvanha||171|39|128|sharpedo
+319|sharpedo||243|83|172|
+320|wailmer||136|68|277|wailord
+321|wailord||175|87|347|
+322|numel||119|79|155|camerupt
+323|camerupt||194|136|172|
+324|torkoal||151|203|172|
+325|spoink||125|122|155|grumpig
+326|grumpig||171|188|190|
+327|spinda||116|116|155|
+328|trapinch||162|78|128|vibrava
+329|vibrava||134|99|137|flygon
+330|flygon||205|168|190|
+331|cacnea||156|74|137|cacturne
+332|cacturne||221|115|172|
+333|swablu||76|132|128|altaria
+334|altaria||141|201|181|
+335|zangoose||222|124|177|
+336|seviper||196|118|177|
+337|lunatone||178|153|207|
+338|solrock||178|153|207|
+339|barboach||93|82|137|whiscash
+340|whiscash||151|141|242|
+341|corphish||141|99|125|crawdaunt
+342|crawdaunt||224|142|160|
+343|baltoy||77|124|120|claydol
+344|claydol||140|229|155|
+345|lileep||105|150|165|cradily
+346|cradily||152|194|200|
+347|anorith||176|100|128|armaldo
+348|armaldo||222|174|181|
+349|feebas||29|85|85|milotic
+350|milotic||192|219|216|
+351|castform||139|139|172|
+352|kecleon||161|189|155|
+353|shuppet||138|65|127|banette
+354|banette||218|126|162|
+355|duskull||70|162|85|dusclops
+356|dusclops||124|234|120|dusknoir
+357|tropius||136|163|223|
+358|chimecho||175|170|181|
+359|absol||246|120|163|
+360|wynaut||41|86|216|wobbuffet
+361|snorunt||95|95|137|froslass+glalie
+362|glalie||162|162|190|
+363|spheal||95|90|172|sealeo
+364|sealeo||137|132|207|walrein
+365|walrein||182|176|242|
+366|clamperl||133|135|111|huntail+gorebyss
+367|huntail||197|179|146|
+368|gorebyss||211|179|146|
+369|relicanth||162|203|225|
+370|luvdisc||81|128|125|
+371|bagon||134|93|128|shelgon
+372|shelgon||172|155|163|salamence
+373|salamence||277|168|216|
+374|beldum||96|132|120|metang
+375|metang||138|176|155|metagross
+376|metagross||257|228|190|
+377|regirock||179|309|190|
+378|regice||179|309|190|
+379|registeel||143|285|190|
+380|latias||228|246|190|
+381|latios||268|212|190|
+382|kyogre||270|228|205|
+383|groudon||270|228|205|
+384|rayquaza||284|170|213|
+385|jirachi||210|210|225|
+386|deoxys||345|115|137|
+386|deoxys_attack|Attack|414|46|137|
+386|deoxys_defense|Defense|144|330|137|
+386|deoxys_speed|Speed|230|218|137|
+387|turtwig||119|110|146|grotle
+388|grotle||157|143|181|torterra
+389|torterra||202|188|216|
+390|chimchar||113|86|127|monferno
+391|monferno||158|105|162|infernape
+392|infernape||222|151|183|
+393|piplup||112|102|142|prinplup
+394|prinplup||150|139|162|empoleon
+395|empoleon||210|186|197|
+396|starly||101|58|120|staravia
+397|staravia||142|94|146|staraptor
+398|staraptor||234|140|198|
+399|bidoof||80|73|153|bibarel
+400|bibarel||162|119|188|
+401|kricketot||45|74|114|kricketune
+402|kricketune||160|100|184|
+403|shinx||117|64|128|luxio
+404|luxio||159|95|155|luxray
+405|luxray||232|156|190|
+406|budew||91|109|120|roselia
+407|roserade||243|185|155|
+408|cranidos||218|71|167|rampardos
+409|rampardos||295|109|219|
+410|shieldon||76|195|102|bastiodon
+411|bastiodon||94|286|155|
+412|burmy_plant|Plant|53|83|120|wormadam_plant+mothim
+412|burmy_sandy|Sandy|53|83|120|wormadam_sandy+mothim
+412|burmy_trash|Trash|53|83|120|wormadam_trash+mothim
+413|wormadam_plant|Plant|141|180|155|
+413|wormadam_sandy|Sandy|141|180|155|
+413|wormadam_trash|Trash|127|175|155|
+414|mothim||185|98|172|
+415|combee||59|83|102|vespiquen
+416|vespiquen||149|190|172|
+417|pachirisu||94|172|155|
+418|buizel||132|67|146|floatzel
+419|floatzel||221|114|198|
+420|cherubi||108|92|128|cherrim_overcast
+421|cherrim_overcast||170|153|172|
+422|shellos||103|105|183|gastrodon
+423|gastrodon||169|143|244|
+424|ambipom||205|143|181|
+425|drifloon||117|80|207|drifblim
+426|drifblim||180|102|312|
+427|buneary||130|105|146|lopunny
+428|lopunny||156|194|163|
+429|mismagius||211|187|155|
+430|honchkrow||243|103|225|
+431|glameow||109|82|135|purugly
+432|purugly||172|133|174|
+433|chingling||114|94|128|chimecho
+434|stunky||121|90|160|skuntank
+435|skuntank||184|132|230|
+436|bronzor||43|154|149|bronzong
+437|bronzong||161|213|167|
+438|bonsly||124|133|137|sudowoodo
+439|mime_jr||125|142|85|mr_mime
+440|happiny||25|77|225|chansey
+441|chatot||183|91|183|
+442|spiritomb||169|199|137|
+443|gible||124|84|151|gabite
+444|gabite||172|125|169|garchomp
+445|garchomp||261|193|239|
+446|munchlax||137|117|286|snorlax
+447|riolu||127|78|120|lucario
+448|lucario||236|144|172|
+449|hippopotas||124|118|169|hippowdon
+450|hippowdon||201|191|239|
+451|skorupi||93|151|120|drapion
+452|drapion||180|202|172|
+453|croagunk||116|76|134|toxicroak
+454|toxicroak||211|133|195|
+455|carnivine||187|136|179|
+456|finneon||96|116|135|lumineon
+457|lumineon||142|170|170|
+458|mantyke||105|179|128|mantine
+459|snover||115|105|155|abomasnow
+460|abomasnow||178|158|207|
+461|weavile||243|171|172|
+462|magnezone||238|205|172|
+463|lickilicky||161|181|242|
+464|rhyperior||241|190|251|
+465|tangrowth||207|184|225|
+466|electivire||249|163|181|
+467|magmortar||247|172|181|
+468|togekiss||225|217|198|
+469|yanmega||231|156|200|
+470|leafeon||216|219|163|
+471|glaceon||238|205|163|
+472|gliscor||185|222|181|
+473|mamoswine||247|146|242|
+474|porygon_z||264|150|198|
+475|gallade||237|195|169|
+476|probopass||135|275|155|
+477|dusknoir||180|254|128|
+478|froslass||171|150|172|
+479|rotom||185|159|137|
+479|rotom_fan|Fan|204|219|137|
+479|rotom_frost|Frost|204|219|137|
+479|rotom_heat|Heat|204|219|137|
+479|rotom_mow|Mow|204|219|137|
+479|rotom_wash|Wash|204|219|137|
+480|uxie||156|270|181|
+481|mesprit||212|212|190|
+482|azelf||270|151|181|
+483|dialga||275|211|205|
+483|dialga_origin|Origin|270|225|205|
+484|palkia||280|215|189|
+484|palkia_origin|Origin|286|223|189|
+485|heatran||251|213|209|
+486|regigigas||287|210|221|
+487|giratina_altered|Altered|187|225|284|
+487|giratina_origin|Origin|225|187|284|
+488|cresselia||152|258|260|
+491|darkrai||285|198|172|
+492|shaymin_land|Land|210|210|225|
+492|shaymin_sky|Sky|261|166|225|
+494|victini||210|210|225|
+495|snivy||88|107|128|servine
+496|servine||122|152|155|serperior
+497|serperior||161|204|181|
+498|tepig||115|85|163|pignite
+499|pignite||173|106|207|emboar
+500|emboar||235|127|242|
+501|oshawott||117|85|146|dewott
+502|dewott||159|116|181|samurott+samurott_hisuian
+503|samurott||212|157|216|
+503|samurott_hisuian|Hisuian|218|152|207|
+504|patrat||98|73|128|watchog
+505|watchog||165|139|155|
+506|lillipup||107|86|128|herdier
+507|herdier||145|126|163|stoutland
+508|stoutland||206|182|198|
+509|purrloin||98|73|121|liepard
+510|liepard||187|106|162|
+511|pansage||104|94|137|simisage
+512|simisage||206|133|181|
+513|pansear||104|94|137|simisear
+514|simisear||206|133|181|
+515|panpour||104|94|137|simipour
+516|simipour||206|133|181|
+517|munna||111|92|183|musharna
+518|musharna||183|166|253|
+519|pidove||98|80|137|tranquill
+520|tranquill||144|107|158|unfezant
+521|unfezant||226|146|190|
+522|blitzle||118|64|128|zebstrika
+523|zebstrika||211|136|181|
+524|roggenrola||121|110|146|boldore
+525|boldore||174|143|172|gigalith
+526|gigalith||226|201|198|
+527|woobat||107|85|163|swoobat
+528|swoobat||161|119|167|
+529|drilbur||154|85|155|excadrill
+530|excadrill||255|129|242|
+531|audino||114|163|230|
+532|timburr||134|87|181|gurdurr
+533|gurdurr||180|134|198|conkeldurr
+534|conkeldurr||243|158|233|
+535|tympole||98|78|137|palpitoad
+536|palpitoad||128|109|181|seismitoad
+537|seismitoad||188|150|233|
+538|throh||172|160|260|
+539|sawk||231|153|181|
+540|sewaddle||96|124|128|swadloon
+541|swadloon||115|162|146|leavanny
+542|leavanny||205|165|181|
+543|venipede||83|99|102|whirlipede
+544|whirlipede||100|173|120|scolipede
+545|scolipede||203|175|155|
+546|cottonee||71|111|120|whimsicott
+547|whimsicott||164|176|155|
+548|petilil||119|91|128|lilligant+lilligant_hisuian
+549|lilligant||214|155|172|
+549|lilligant_hisuian|Hisuian|208|159|172|
+550|basculin||189|129|172|
+551|sandile||132|69|137|krokorok
+552|krokorok||155|90|155|krookodile
+553|krookodile||229|158|216|
+554|darumaka_galarian|Galarian|153|86|172|darmanitan_galarian_standard
+555|darmanitan_galarian_standard|Galarian|263|114|233|
+556|maractus||201|130|181|
+557|dwebble||118|128|137|crustle
+558|crustle||188|200|172|
+559|scraggy||132|132|137|scrafty
+560|scrafty||163|222|163|
+561|sigilyph||204|167|176|
+562|yamask||95|141|116|cofagrigus
+562|yamask_galarian|Galarian|95|141|116|runerigus
+563|cofagrigus||163|237|151|
+564|tirtouga||134|146|144|carracosta
+565|carracosta||192|197|179|
+566|archen||213|89|146|archeops
+567|archeops||292|139|181|
+568|trubbish||96|122|137|garbodor
+569|garbodor||181|164|190|
+570|zorua||153|78|120|zoroark
+570|zorua_hisuian|Hisuian|162|79|111|zoroark_hisuian
+571|zoroark||250|127|155|
+571|zoroark_hisuian|Hisuian|261|128|146|
+572|minccino||98|80|146|cinccino
+573|cinccino||198|130|181|
+574|gothita||98|112|128|gothorita
+575|gothorita||137|153|155|gothitelle
+576|gothitelle||176|205|172|
+577|solosis||170|83|128|duosion
+578|duosion||208|103|163|reuniclus
+579|reuniclus||214|148|242|
+580|ducklett||84|96|158|swanna
+581|swanna||182|132|181|
+582|vanillite||118|106|113|vanillish
+583|vanillish||151|138|139|vanilluxe
+584|vanilluxe||218|184|174|
+585|deerling||115|100|155|sawsbuck
+586|sawsbuck||198|146|190|
+587|emolga||158|127|146|
+588|karrablast||137|87|137|escavalier
+589|escavalier||223|187|172|
+590|foongus||97|91|170|amoonguss
+591|amoonguss||155|139|249|
+592|frillish||115|134|146|jellicent
+593|jellicent||159|178|225|
+594|alomomola||138|131|338|
+595|joltik||110|98|137|galvantula
+596|galvantula||201|128|172|
+597|ferroseed||82|155|127|ferrothorn
+598|ferrothorn||158|223|179|
+599|klink||98|121|120|klang
+600|klang||150|174|155|klinklang
+601|klinklang||199|214|155|
+602|tynamo||105|78|111|eelektrik
+603|eelektrik||156|130|163|eelektross
+604|eelektross||217|152|198|
+605|elgyem||148|100|146|beheeyem
+606|beheeyem||221|163|181|
+607|litwick||108|98|137|lampent
+608|lampent||169|115|155|chandelure
+609|chandelure||271|182|155|
+610|axew||154|101|130|fraxure
+611|fraxure||212|123|165|haxorus
+612|haxorus||284|172|183|
+613|cubchoo||128|74|146|beartic
+614|beartic||233|152|216|
+615|cryogonal||190|218|190|
+616|shelmet||72|140|137|accelgor
+617|accelgor||220|120|190|
+618|stunfisk||144|171|240|
+618|stunfisk_galarian|Galarian|144|171|240|
+619|mienfoo||160|98|128|mienshao
+620|mienshao||258|127|163|
+621|druddigon||213|170|184|
+622|golett||127|92|153|golurk
+623|golurk||222|154|205|
+624|pawniard||154|114|128|bisharp
+625|bisharp||232|176|163|kingambit
+626|bouffalant||195|182|216|
+627|rufflet||150|97|172|braviary+braviary_hisuian
+628|braviary||232|152|225|
+628|braviary_hisuian|Hisuian|213|137|242|
+629|vullaby||105|139|172|mandibuzz
+630|mandibuzz||129|205|242|
+631|heatmor||204|129|198|
+632|durant||217|188|151|
+633|deino||116|93|141|zweilous
+634|zweilous||159|135|176|hydreigon
+635|hydreigon||256|188|211|
+636|larvesta||156|107|146|volcarona
+637|volcarona||264|189|198|
+638|cobalion||192|229|209|
+639|terrakion||260|192|209|
+640|virizion||192|229|209|
+641|tornadus_incarnate|Incarnate|266|164|188|
+641|tornadus_therian|Therian|238|189|188|
+642|thundurus_incarnate|Incarnate|266|164|188|
+642|thundurus_therian|Therian|295|161|188|
+643|reshiram||275|211|205|
+644|zekrom||275|211|205|
+645|landorus_incarnate|Incarnate|261|182|205|
+645|landorus_therian|Therian|289|179|205|
+646|kyurem||246|170|245|
+646|kyurem_black|Black|310|183|245|
+647|keldeo_ordinary|Ordinary|260|192|209|
+648|meloetta_aria|Aria|250|225|225|
+649|genesect||252|199|174|
+650|chespin||110|106|148|quilladin
+651|quilladin||146|156|156|chesnaught
+652|chesnaught||201|204|204|
+653|fennekin||116|102|120|braixen
+654|braixen||171|130|153|delphox
+655|delphox||230|189|181|
+656|froakie||122|84|121|frogadier
+657|frogadier||168|114|144|greninja
+658|greninja||223|152|176|
+659|bunnelby||68|72|116|diggersby
+660|diggersby||112|155|198|
+661|fletchling||95|80|128|fletchinder
+662|fletchinder||145|110|158|talonflame
+663|talonflame||176|155|186|
+664|scatterbug||63|63|116|vivillon
+666|vivillon||176|103|190|
+667|litleo||139|112|158|pyroar
+668|pyroar||221|149|200|
+669|flabebe||108|120|127|floette
+670|floette||136|151|144|florges
+671|florges||212|244|186|
+672|skiddo||123|102|165|gogoat
+673|gogoat||196|146|265|
+674|pancham||145|107|167|pangoro
+675|pangoro||226|146|216|
+676|furfrou||164|167|181|
+677|espurr||120|114|158|meowstic_female
+678|meowstic_female|Female|166|167|179|
+679|honedge||135|139|128|doublade
+680|doublade||188|206|153|aegislash_shield
+681|aegislash_shield|Shield|97|272|155|
+682|spritzee||110|113|186|aromatisse
+683|aromatisse||173|150|226|
+684|swirlix||109|119|158|slurpuff
+685|slurpuff||168|163|193|
+686|inkay||98|95|142|malamar
+687|malamar||177|165|200|
+688|binacle||96|120|123|barbaracle
+689|barbaracle||194|205|176|
+690|skrelp||109|109|137|dragalge
+691|dragalge||177|207|163|
+692|clauncher||108|117|137|clawitzer
+693|clawitzer||221|171|174|
+694|helioptile||115|78|127|heliolisk
+695|heliolisk||219|168|158|
+696|tyrunt||158|123|151|tyrantrum
+697|tyrantrum||227|191|193|
+698|amaura||124|109|184|aurorus
+699|aurorus||186|163|265|
+700|sylveon||203|205|216|
+701|hawlucha||195|153|186|
+702|dedenne||164|134|167|
+703|carbink||95|285|137|
+704|goomy||101|112|128|sliggoo
+705|sliggoo||159|176|169|goodra
+706|goodra||220|242|207|
+707|klefki||160|179|149|
+708|phantump||125|103|125|trevenant
+709|trevenant||201|154|198|
+710|pumpkaboo_average|Average|121|123|135|gourgeist_average
+710|pumpkaboo_large|Large|120|122|144|gourgeist_large
+710|pumpkaboo_small|Small|122|124|127|gourgeist_small
+710|pumpkaboo_super|Super|118|120|153|gourgeist_super
+711|gourgeist_average|Average|175|213|163|
+711|gourgeist_large|Large|179|206|181|
+711|gourgeist_small|Small|171|219|146|
+711|gourgeist_super|Super|182|200|198|
+712|bergmite||117|120|146|avalugg+avalugg_hisuian
+713|avalugg||196|240|216|
+713|avalugg_hisuian|Hisuian|214|238|216|
+714|noibat||83|73|120|noivern
+715|noivern||205|175|198|
+716|xerneas||250|185|246|
+717|yveltal||250|185|246|
+718|zygarde_10|10%|205|173|144|
+718|zygarde|50%|203|232|239|
+718|zygarde_complete|Complete|184|207|389|
+719|diancie||190|285|137|
+720|hoopa||261|187|173|
+720|hoopa_unbound|Unbound|311|191|173|
+721|volcanion||252|216|190|
+722|rowlet||102|99|169|dartrix
+723|dartrix||142|139|186|decidueye+decidueye_hisuian
+724|decidueye||210|179|186|
+724|decidueye_hisuian|Hisuian|213|174|204|
+725|litten||128|79|128|torracat
+726|torracat||174|103|163|incineroar
+727|incineroar||214|175|216|
+728|popplio||120|103|137|brionne
+729|brionne||168|145|155|primarina
+730|primarina||232|195|190|
+731|pikipek||136|59|111|trumbeak
+732|trumbeak||159|100|146|toucannon
+733|toucannon||222|146|190|
+734|yungoos||122|56|134|gumshoos
+735|gumshoos||194|113|204|
+736|grubbin||115|85|132|charjabug
+737|charjabug||145|161|149|vikavolt
+738|vikavolt||254|158|184|
+739|crabrawler||150|104|132|crabominable
+740|crabominable||231|138|219|
+741|oricorio_baile|Baile|196|145|181|
+742|cutiefly||110|81|120|ribombee
+743|ribombee||198|146|155|
+744|rockruff||117|78|128|lycanroc_midnight+lycanroc_midday+lycanroc_dusk
+745|lycanroc_dusk|Dusk|234|139|181|
+745|lycanroc_midday|Midday|231|140|181|
+745|lycanroc_midnight|Midnight|218|152|198|
+747|mareanie||98|110|137|toxapex
+748|toxapex||114|273|137|
+749|mudbray||175|121|172|mudsdale
+750|mudsdale||214|174|225|
+751|dewpider||72|117|116|araquanid
+752|araquanid||126|219|169|
+753|fomantis||100|64|120|lurantis
+754|lurantis||192|169|172|
+755|morelull||108|119|120|shiinotic
+756|shiinotic||154|168|155|
+757|salandit||136|80|134|salazzle
+758|salazzle||228|130|169|
+759|stufful||136|95|172|bewear
+760|bewear||226|141|260|
+761|bounsweet||55|69|123|steenee
+762|steenee||78|94|141|tsareena
+763|tsareena||222|195|176|
+764|comfey||165|215|139|
+765|oranguru||168|192|207|
+766|passimian||222|160|225|
+767|wimpod||67|74|93|golisopod
+768|golisopod||218|226|181|
+769|sandygast||120|118|146|palossand
+770|palossand||178|178|198|
+774|minior_core|Core|218|131|155|
+775|komala||216|165|163|
+776|turtonator||165|215|155|
+777|togedemaru||190|145|163|
+778|mimikyu||177|199|146|
+779|bruxish||208|145|169|
+780|drampa||231|164|186|
+781|dhelmise||233|179|172|
+782|jangmo_o||102|108|128|hakamo_o
+783|hakamo_o||145|162|146|kommo_o
+784|kommo_o||222|240|181|
+785|tapu_koko||250|181|172|
+786|tapu_lele||259|208|172|
+787|tapu_bulu||249|215|172|
+788|tapu_fini||189|254|172|
+791|solgaleo||255|191|264|
+792|lunala||255|191|264|
+793|nihilego||249|210|240|
+794|buzzwole||236|196|216|
+795|pheromosa||316|85|174|
+796|xurkitree||330|144|195|
+797|celesteela||207|199|219|
+798|kartana||323|182|139|
+799|guzzlord||188|99|440|
+800|necrozma||251|195|219|
+800|necrozma_dawn_wings|Dawn Wings|277|220|200|
+802|marshadow||265|190|207|
+803|poipole||145|133|167|naganadel
+804|naganadel||263|159|177|
+805|stakataka||213|298|156|
+806|blacephalon||315|148|142|
+807|zeraora||252|177|204|
+808|meltan||118|99|130|melmetal
+809|melmetal||226|190|264|
+810|grookey||122|91|137|thwackey
+811|thwackey||165|134|172|rillaboom
+812|rillaboom||239|168|225|
+813|scorbunny||132|79|137|raboot
+814|raboot||170|125|163|cinderace
+815|cinderace||238|163|190|
+816|sobble||132|79|137|drizzile
+817|drizzile||186|113|163|inteleon
+818|inteleon||262|142|172|
+819|skwovet||95|86|172|greedent
+820|greedent||160|156|260|
+821|rookidee||88|67|116|corvisquire
+822|corvisquire||129|110|169|corviknight
+823|corviknight||163|192|221|
+824|blipbug||46|67|93|dottler
+825|dottler||87|157|137|orbeetle
+826|orbeetle||156|240|155|
+827|nickit||85|82|120|thievul
+828|thievul||172|164|172|
+829|gossifleur||70|104|120|eldegoss
+830|eldegoss||148|211|155|
+831|wooloo||76|97|123|dubwool
+832|dubwool||159|198|176|
+835|yamper||80|90|153|boltund
+836|boltund||197|131|170|
+837|rolycoly||73|91|102|carkol
+838|carkol||114|157|190|coalossal
+839|coalossal||146|198|242|
+840|applin||71|116|120|flapple+appletun+dipplin
+841|flapple||214|144|172|
+842|appletun||178|146|242|
+843|silicobra||103|123|141|sandaconda
+844|sandaconda||202|207|176|
+845|cramorant||173|163|172|
+846|arrokuda||118|72|121|barraskewda
+847|barraskewda||258|127|156|
+848|toxel||97|65|120|toxtricity
+849|toxtricity||224|140|181|
+850|sizzlipede||118|90|137|centiskorch
+851|centiskorch||220|158|225|
+852|clobbopus||121|103|137|grapploct
+853|grapploct||209|162|190|
+854|sinistea||134|96|120|polteageist
+855|polteageist||248|189|155|
+856|hatenna||98|93|123|hattrem
+857|hattrem||153|133|149|hatterene
+858|hatterene||237|182|149|
+859|impidimp||103|69|128|morgrem
+860|morgrem||145|102|163|grimmsnarl
+861|grimmsnarl||227|139|216|
+862|obstagoon||180|194|212|
+863|perrserker||195|162|172|
+864|cursola||253|182|155|
+865|sirfetchd||248|176|158|
+866|mr_rime||212|179|190|
+867|runerigus||163|237|151|
+870|falinks||193|170|163|
+872|snom||76|59|102|frosmoth
+873|frosmoth||230|155|172|
+874|stonjourner||222|182|225|
+876|indeedee_female|Female|184|184|172|
+876|indeedee_male|Male|208|166|155|
+877|morpeko_full_belly|Full Belly|192|121|151|
+884|duraludon||239|185|172|
+885|dreepy||117|61|99|drakloak
+886|drakloak||163|105|169|dragapult
+887|dragapult||266|170|204|
+888|zacian_crowned_sword|Crowned|332|240|192|
+888|zacian_hero|Hero|254|236|192|
+889|zamazenta_crowned_shield|Crowned|250|292|192|
+889|zamazenta_hero|Hero|254|236|192|
+890|eternatus||278|192|268|
+891|kubfu||170|112|155|urshifu_rapid_strike
+892|urshifu_rapid_strike|Rapid Strike|254|177|225|
+893|zarude||242|215|233|
+894|regieleki||250|125|190|
+895|regidrago||202|101|400|
+899|wyrdeer||206|145|230|
+900|kleavor||253|174|172|
+901|ursaluna||243|181|277|
+903|sneasler||259|158|190|
+904|overqwil||222|171|198|
+905|enamorus_incarnate|Incarnate|281|162|179|
+905|enamorus_therian|Therian|250|201|179|
+906|sprigatito||116|99|120|floragato
+907|floragato||157|128|156|meowscarada
+908|meowscarada||233|153|183|
+909|fuecoco||112|96|167|crocalor
+910|crocalor||162|134|191|skeledirge
+911|skeledirge||207|178|232|
+912|quaxly||120|86|146|quaxwell
+913|quaxwell||162|123|172|quaquaval
+914|quaquaval||236|159|198|
+915|lechonk||81|79|144|oinkologne+oinkologne_female
+916|oinkologne||186|153|242|
+916|oinkologne_female|Female|169|162|251|
+917|tarountula||70|77|111|spidops
+918|spidops||139|166|155|
+919|nymble||81|65|107|lokix
+920|lokix||199|144|174|
+921|pawmi||95|45|128|pawmo
+922|pawmo||147|82|155|pawmot
+923|pawmot||232|141|172|
+924|tandemaus||98|90|137|maushold
+925|maushold||159|157|179|
+926|fidough||102|126|114|dachsbun
+927|dachsbun||159|212|149|
+928|smoliv||100|89|121|dolliv
+929|dolliv||137|131|141|arboliva
+930|arboliva||219|189|186|
+931|squawkabilly||185|105|193|
+932|nacli||95|108|146|naclstack
+933|naclstack||105|160|155|garganacl
+934|garganacl||171|212|225|
+935|charcadet||92|74|120|armarouge+ceruledge
+936|armarouge||234|185|198|
+937|ceruledge||239|189|181|
+938|tadbulb||104|73|156|bellibolt
+939|bellibolt||184|165|240|
+940|wattrel||105|75|120|kilowattrel
+941|kilowattrel||221|132|172|
+942|maschiff||140|108|155|mabosstiff
+943|mabosstiff||230|168|190|
+944|shroodle||124|70|120|grafaiai
+945|grafaiai||199|149|160|
+946|bramblin||121|64|120|brambleghast
+947|brambleghast||228|144|146|
+948|toedscool||97|149|120|toedscruel
+949|toedscruel||166|209|190|
+950|klawf||184|185|172|
+955|flittle||105|60|102|espathra
+956|espathra||204|127|216|
+957|tinkatink||85|110|137|tinkatuff
+958|tinkatuff||109|145|163|tinkaton
+959|tinkaton||155|196|198|
+960|wiglett||109|52|67|wugtrio
+961|wugtrio||205|136|111|
+962|bombirdier||198|172|172|
+965|varoom||123|107|128|revavroom
+966|revavroom||229|168|190|
+968|orthworm||161|219|172|
+969|glimmet||187|104|134|glimmora
+970|glimmora||246|177|195|
+971|greavard||105|106|137|houndstone
+972|houndstone||186|195|176|
+973|flamigo||227|145|193|
+974|cetoddle||119|80|239|cetitan
+975|cetitan||208|123|347|
+977|dondozo||176|178|312|
+978|tatsugiri_curly|Curly|226|166|169|
+979|annihilape||220|178|242|
+980|clodsire||127|151|277|
+982|dudunsparce||188|150|268|
+983|kingambit||238|203|225|
+996|frigibax||134|86|163|arctibax
+997|arctibax||173|128|207|baxcalibur
+998|baxcalibur||254|168|229|
+999|gimmighoul||140|76|128|gholdengo
+1000|gholdengo||252|190|202|
+1011|dipplin||173|184|190|hydrapple
+1012|poltchageist||134|96|120|sinistcha
+1013|sinistcha||225|191|174|
+1019|hydrapple||216|186|235|`;
+
+const CPM_INT=[0.094,0.16639787,0.21573247,0.25572005,0.29024988,0.3210876,0.34921268,0.37523559,0.39956728,0.42250001,0.44310755,0.46279839,0.48168495,0.49985844,0.51739395,0.53435433,0.55079269,0.56675452,0.58227891,0.59740001,0.61215729,0.62656713,0.64065295,0.65443563,0.667934,0.68116492,0.69414365,0.70688421,0.71939909,0.7317,0.73776948,0.74378943,0.74976104,0.75568551,0.76156384,0.76739717,0.7731865,0.77893275,0.78463697,0.79030001,0.79530001,0.8003,0.8053,0.81029999,0.81529999,0.82029999,0.82529999,0.83029999,0.83529999,0.84029999,0.84529999];
+const LV=[],CPM=[];for(let i=0;i<CPM_INT.length;i++){LV.push(i+1);CPM.push(CPM_INT[i]);if(i<CPM_INT.length-1){LV.push(i+1.5);const a=CPM_INT[i],b=CPM_INT[i+1];CPM.push(i+1<40?Math.sqrt((a*a+b*b)/2):(a+b)/2)}}
+function cpOf(b,iv,c){return Math.max(10,Math.floor((b[0]+iv[0])*Math.sqrt(b[1]+iv[1])*Math.sqrt(b[2]+iv[2])*c*c/10))}
+if(typeof module!=='undefined')module.exports={LV,CPM,cpOf};
+
+// ---- appraisal bar detection (pure functions on RGBA data) ----
+function cls(r,g,b){
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);
+  if(r>195&&g>115&&g<205&&b<140&&r-b>90)return 1;          // orange (partial)
+  if(r>185&&g>70&&g<165&&b>70&&b<170&&r-g>45&&r-b>40)return 2; // red/pink (15)
+  if(mx-mn<14&&mx>=198&&mx<=240)return 3;                     // gray (empty)
+  if(mn>238)return 4;                                         // white gap
+  return 0;
+}
+function scanRow(d,W,y){
+  const o=y*W*4;let best=null;let x=0;
+  const gapMax=Math.max(3,Math.round(W*0.012));
+  while(x<W){
+    let c=cls(d[o+x*4],d[o+x*4+1],d[o+x*4+2]);
+    if(c<1||c>3){x++;continue}
+    let segs=[],s=x,e=x,gap=0,cnt=0,fillEnd=-1,red=0,colored=0;
+    let cur=x;
+    while(cur<W){
+      c=cls(d[o+cur*4],d[o+cur*4+1],d[o+cur*4+2]);
+      if(c>=1&&c<=3){
+        if(gap>0){segs.push([s,e]);s=cur}
+        e=cur;gap=0;colored++;
+        if(c===1||c===2){fillEnd=cur;if(c===2)red++;}
+      }else if(gap<gapMax){gap++}
+      else break;
+      cur++;
+    }
+    segs.push([s,e]);
+    const len=e-segs[0][0]+1;
+    if(!best||len>best.len)best={x0:segs[0][0],x1:e,len,segs,fillEnd,red,colored};
+    x=cur+1;
+  }
+  return best;
+}
+function valueOf(row){
+  if(row.fillEnd<0)return 0;
+  const L=row.x1-row.x0+1;
+  if(row.red>L*0.5)return 15;
+  // gaps between pieces; keep the two closest to 1/3 and 2/3 of the bar
+  const gaps=[];for(let i=1;i<row.segs.length;i++)gaps.push([row.segs[i-1][1]+1,row.segs[i][0]-1]);
+  const pick=p=>{let best=null,bd=1e9;for(const g of gaps){const dd=Math.abs((g[0]+g[1])/2-(row.x0+L*p));if(dd<bd){bd=dd;best=g}}return bd<L*0.06?best:null};
+  let g1=pick(1/3),g2=pick(2/3);
+  if(!g1||!g2){const sl=L/3;g1=[Math.round(row.x0+sl)-1,Math.round(row.x0+sl)];g2=[Math.round(row.x0+2*sl)-1,Math.round(row.x0+2*sl)];}
+  const segs=[[row.x0,g1[0]-1],[g1[1]+1,g2[0]-1],[g2[1]+1,row.x1]];
+  const fe=row.fillEnd;
+  for(let k=0;k<3;k++){const[s,e]=segs[k];
+    if(fe<s)return 5*k;
+    if(fe<=e){const f=(fe+1-s)/(e+1-s);return 5*k+Math.round(f*5);}
+  }
+  return 15;
+}
+function detectBars(d,W,H){
+  const rows=[];
+  for(let y=Math.floor(H*0.4);y<Math.floor(H*0.97);y++){
+    const r=scanRow(d,W,y);
+    if(r&&r.len>=W*0.28&&r.len<=W*0.8&&r.segs.length>=1&&r.segs.length<=4)rows.push(Object.assign(r,{y}));
+  }
+  // group into bands
+  const bands=[];
+  for(const r of rows){
+    const b=bands[bands.length-1];
+    if(b&&r.y-b.y1<=1&&Math.abs(r.x0-b.x0)<=3&&Math.abs(r.x1-b.x1)<=3){b.y1=r.y;b.rows.push(r)}
+    else bands.push({x0:r.x0,x1:r.x1,y0:r.y,y1:r.y,rows:[r]});
+  }
+  const good=bands.filter(b=>b.rows.length>=Math.max(3,H*0.004)&&b.rows.length<=H*0.02);
+  for(let i=0;i+2<good.length;i++){
+    const a=good[i],b=good[i+1],c=good[i+2];
+    if(Math.abs(a.x0-b.x0)>4||Math.abs(a.x0-c.x0)>4||Math.abs(a.x1-b.x1)>4||Math.abs(a.x1-c.x1)>4)continue;
+    const g1=b.y0-a.y0,g2=c.y0-b.y0;
+    if(g1<H*0.02||Math.abs(g1-g2)>g1*0.2)continue;
+    const val=band=>{const vs=band.rows.slice(1,-1).map(valueOf);if(!vs.length)return valueOf(band.rows[0]);vs.sort((p,q)=>p-q);return vs[vs.length>>1]};
+    return {iv:[val(a),val(b),val(c)],top:a.y0,x0:a.x0,x1:a.x1};
+  }
+  return null;
+}
+// signature of the upper screen (pokemon + name) for telling individuals apart
+function signature(d,W,H,top){
+  const n=12,sig=[];const y1=Math.max(8,Math.floor(top*0.85));
+  for(let j=0;j<n;j++)for(let i=0;i<n;i++){
+    const x=Math.floor((i+.5)*W/n),y=Math.floor((j+.5)*y1/n),o=(y*W+x)*4;
+    sig.push((d[o]+d[o+1]+d[o+2])/3);
+  }
+  return sig;
+}
+function sigDist(a,b){let s=0;for(let i=0;i<a.length;i++)s+=Math.abs(a[i]-b[i]);return s/a.length}
+// samples: [{t, det:{iv,top}|null, sig}] -> individuals
+function groupSamples(samples){
+  const runs=[];let cur=null;
+  for(const s of samples){
+    if(!s.det){cur=null;continue}
+    const key=s.det.iv.join('/');
+    if(cur&&(cur.last.key!==key)){
+      // value changed inside a run: new individual if picture also changed, else animation
+      if(sigDist(cur.last.sig,s.sig)>18){cur=null}
+    }
+    if(!cur){cur={items:[]};runs.push(cur)}
+    cur.items.push({t:s.t,key,iv:s.det.iv,sig:s.sig,top:s.det.top});cur.last=cur.items[cur.items.length-1];
+  }
+  // pick stable value per run (most frequent, ties -> later)
+  let out=runs.map(r=>{const cnt={};r.items.forEach((it,i)=>{cnt[it.key]=(cnt[it.key]||0)+1+i*1e-3});
+    const key=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0];const it=r.items.filter(x=>x.key===key);const mid=it[it.length>>1];
+    return {iv:mid.iv,t:mid.t,sig:mid.sig,top:mid.top,n:r.items.length,t0:r.items[0].t,t1:r.items[r.items.length-1].t};});
+  out=out.filter(r=>r.n>=2);
+  // merge neighbours that are the same individual (same IV and same picture)
+  const m=[];for(const r of out){const p=m[m.length-1];if(p&&p.iv.join()==r.iv.join()&&sigDist(p.sig,r.sig)<14){p.n+=r.n;p.t1=r.t1}else m.push(r)}
+  return m;
+}
+if(typeof module!=='undefined')module.exports={detectBars,signature,sigDist,groupSamples,cls};
+if(typeof module!=='undefined')module.exports.debug=function(d,W,H){const out=[];for(let y=Math.floor(H*0.4);y<Math.floor(H*0.97);y++){const r=scanRow(d,W,y);if(r&&r.len>=W*0.28&&r.len<=W*0.8)out.push([y,r.x0,r.x1,r.segs.map(s=>s.join('-')).join(','),r.fillEnd,r.red,valueOf(r)].join(' '))}return out};
+
+// ---------- read the Pokémon name on screen (whole-word template matching) ----------
+const NR={GH:24,GW:96};
+function findNameBox(d,W,H,barTop){
+  // green HP line under the name: (92,224,168)
+  let yG=-1;
+  for(let y=Math.floor(barTop*0.35);y<barTop;y++){
+    let n=0;for(let x=Math.floor(W*0.1);x<W*0.9;x+=2){const o=(y*W+x)*4,r=d[o],g=d[o+1],b=d[o+2];if(g>180&&g-r>60&&g-b>25)n++}
+    if(n>W*0.4*0.5){yG=y;break}
+  }
+  if(yG<0)return null;
+  const y0=Math.max(0,Math.floor(yG-W*0.17)),y1=Math.floor(yG-W*0.015),x0=Math.floor(W*0.08),x1=Math.floor(W*0.86);
+  let bx0=1e9,bx1=-1,by0=1e9,by1=-1;
+  for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++){const o=(y*W+x)*4;const r=d[o],g=d[o+1],b=d[o+2];
+    if(r+g+b<420&&Math.max(r,g,b)-Math.min(r,g,b)<60){if(x<bx0)bx0=x;if(x>bx1)bx1=x;if(y<by0)by0=y;if(y>by1)by1=y}}
+  if(bx1<0||by1-by0<W*0.02)return null;
+  return {x:bx0,y:by0,w:bx1-bx0+1,h:by1-by0+1,yG};
+}
+// grayscale ink map (0..1) of a box, resampled to GH x GW with area averaging
+function inkGrid(get,bw,bh){
+  const g=new Float32Array(NR.GH*NR.GW);
+  for(let j=0;j<NR.GH;j++)for(let i=0;i<NR.GW;i++){
+    const sx0=i*bw/NR.GW,sx1=(i+1)*bw/NR.GW,sy0=j*bh/NR.GH,sy1=(j+1)*bh/NR.GH;let s=0,n=0;
+    for(let y=Math.floor(sy0);y<Math.max(Math.ceil(sy1),Math.floor(sy0)+1);y++)for(let x=Math.floor(sx0);x<Math.max(Math.ceil(sx1),Math.floor(sx0)+1);x++){s+=get(x,y);n++}
+    g[j*NR.GW+i]=s/n;
+  }
+  return blurNorm(g);
+}
+function blurNorm(g){
+  const W=NR.GW,H=NR.GH,o=new Float32Array(g.length);
+  for(let j=0;j<H;j++)for(let i=0;i<W;i++){let s=0,n=0;for(let dj=-1;dj<=1;dj++)for(let di=-1;di<=1;di++){const y=j+dj,x=i+di;if(x<0||y<0||x>=W||y>=H)continue;const w=(di||dj)?0.5:1;s+=g[y*W+x]*w;n+=w}o[j*W+i]=s/n}
+  let m=0;for(const v of o)m+=v;m/=o.length;let sd=0;for(let k=0;k<o.length;k++){o[k]-=m;sd+=o[k]*o[k]}sd=Math.sqrt(sd)||1;for(let k=0;k<o.length;k++)o[k]/=sd;
+  return o;
+}
+let NAME_TPL=null;
+function buildTemplates(){
+  if(NAME_TPL)return NAME_TPL;
+  const c=document.createElement('canvas');c.width=420;c.height=80;const x=c.getContext('2d',{willReadFrequently:true});
+  x.font='400 48px "Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans CJK JP","Noto Sans JP","Yu Gothic","Meiryo",sans-serif';x.textBaseline='middle';
+  const seen=new Set();NAME_TPL=[];
+  for(const s of SPLIST){const nm=JA_NAMES[s.dex-1];if(!nm||seen.has(nm))continue;seen.add(nm);
+    x.fillStyle='#fff';x.fillRect(0,0,420,80);x.fillStyle='#000';x.fillText(nm,6,42);
+    const d=x.getImageData(0,0,420,80).data;let bx0=1e9,bx1=-1,by0=1e9,by1=-1;
+    for(let y=0;y<80;y++)for(let i=0;i<420;i++){if(d[(y*420+i)*4]<128){if(i<bx0)bx0=i;if(i>bx1)bx1=i;if(y<by0)by0=y;if(y>by1)by1=y}}
+    if(bx1<0)continue;const bw=bx1-bx0+1,bh=by1-by0+1;
+    const grid=inkGrid((i,j)=>1-d[((by0+j)*420+bx0+i)*4]/255,bw,bh);
+    NAME_TPL.push({name:nm,dex:s.dex,ar:bw/bh,grid});
+  }
+  return NAME_TPL;
+}
+function readName(d,W,H,barTop){
+  const box=findNameBox(d,W,H,barTop);if(!box)return null;
+  const get=(i,j)=>{const o=((box.y+j)*W+box.x+i)*4;const l=(d[o]+d[o+1]+d[o+2])/3;return Math.max(0,Math.min(1,(235-l)/150))};
+  const g=inkGrid(get,box.w,box.h),ar=box.w/box.h;
+  const res=[];
+  for(const t of buildTemplates()){
+    const q=Math.abs(Math.log(t.ar/ar));if(q>0.3)continue;
+    let s=0;for(let k=0;k<g.length;k++)s+=g[k]*t.grid[k];
+    res.push({name:t.name,dex:t.dex,score:s-q*0.5});
+  }
+  res.sort((a,b)=>b.score-a.score);
+  return {best:res[0]||null,second:res[1]||null,box};
+}
+
+// ---------- species ----------
+const FORM_JA={Alolan:'アローラ',Galarian:'ガラル',Hisuian:'ヒスイ',Paldean:'パルデア',Origin:'オリジン',Altered:'アナザー',Attack:'アタック',Defense:'ディフェンス',Speed:'スピード',Incarnate:'けしん',Therian:'れいじゅう',Female:'メス',Male:'オス',Armored:'アーマード',Crowned:'けんのおう',Hero:'れきせんのゆうしゃ',Aqua:'ウォーター',Blaze:'ブレイズ',Combat:'コンバット',Plant:'くさき',Sandy:'すなち',Trash:'ゴミ',Fan:'スピン',Frost:'フロスト',Heat:'ヒート',Mow:'カット',Wash:'ウォッシュ',Land:'ランド',Sky:'スカイ',Black:'ブラック',Ordinary:'いつも',Aria:'ボイス',Shield:'シールド',Average:'ふつう',Large:'おおきい',Small:'ちいさい',Super:'ギガ',Unbound:'ときはなたれし',Baile:'めらめら',Dusk:'たそがれ',Midday:'まひる',Midnight:'まよなか',Core:'コア','Dawn Wings':'あかつきのつばさ','Rapid Strike':'れんげき','Full Belly':'まんぷく',Curly:'そったすがた',Complete:'パーフェクト'};
+const SP={},SPLIST=[];
+for(const line of GM.split('\n')){
+  const [dex,id,form,a,d,h,ev]=line.split('|');
+  const base=JA_NAMES[+dex-1]||id;
+  const name=form?base+'('+(FORM_JA[form]||form)+')':base;
+  const s={dex:+dex,id,name,st:[+a,+d,+h],evos:ev?ev.split('+'):[]};
+  SP[id]=s;SPLIST.push(s);
+}
+for(const s of SPLIST)s.evos=s.evos.filter(e=>SP[e]);
+function baseIdOf(dex){const c=SPLIST.filter(s=>s.dex===dex);return (c.find(s=>!/_(alolan|galarian|hisuian|paldean)/.test(s.id))||c[0]).id}
+function family(id){const out=[],seen=new Set();(function walk(x){if(seen.has(x)||!SP[x])return;seen.add(x);out.push(SP[x]);SP[x].evos.forEach(walk)})(id);return out}
+const kana=s=>s.replace(/[ぁ-ゖ]/g,c=>String.fromCharCode(c.charCodeAt(0)+0x60));
+function searchSpecies(q){q=kana(q.trim()).toLowerCase();if(!q)return[];
+  const a=[],b=[];for(const s of SPLIST){const n=s.name.toLowerCase();if(n.startsWith(q))a.push(s);else if(n.includes(q)||s.id.includes(q))b.push(s)}
+  return a.concat(b).slice(0,8)}
+
+// ---------- ranking ----------
+const LEAGUES=[{key:'gl',name:'スーパー',cap:1500},{key:'ul',name:'ハイパー',cap:2500},{key:'ml',name:'マスター',cap:Infinity}];
+function maxIdxFor(lv){return LV.indexOf(lv)}
+function bestAt(st,iv,cap,maxIdx){
+  if(cpOf(st,iv,CPM[0])>cap)return null;
+  let lo=0,hi=maxIdx;
+  while(lo<hi){const m=(lo+hi+1)>>1;if(cpOf(st,iv,CPM[m])<=cap)lo=m;else hi=m-1}
+  const c=CPM[lo];
+  const sp=(st[0]+iv[0])*c*(st[1]+iv[1])*c*Math.floor((st[2]+iv[2])*c);
+  return {lv:LV[lo],cp:cpOf(st,iv,c),sp};
+}
+const TCACHE={};
+function table(s,lg,maxIdx){
+  const k=s.id+'|'+lg.key+'|'+maxIdx;if(TCACHE[k])return TCACHE[k];
+  const arr=[];for(let a=0;a<16;a++)for(let d=0;d<16;d++)for(let h=0;h<16;h++){const r=bestAt(s.st,[a,d,h],lg.cap,maxIdx);if(r)arr.push(r.sp)}
+  arr.sort((x,y)=>y-x);return TCACHE[k]={sorted:arr,top:arr[0]};
+}
+function rankOf(s,iv,lg,maxIdx){
+  const r=bestAt(s.st,iv,lg.cap,maxIdx);if(!r)return null;
+  const t=table(s,lg,maxIdx);
+  let lo=0,hi=t.sorted.length;while(lo<hi){const m=(lo+hi)>>1;if(t.sorted[m]>r.sp+1e-9)lo=m+1;else hi=m}
+  return {rank:lo+1,pct:r.sp/t.top*100,cp:r.cp,lv:r.lv};
+}
+
+// ---------- state ----------
+const state={maxLv:50,items:[],next:1};
+try{const v=localStorage.getItem('ivr_maxlv');if(v)state.maxLv=+v}catch(e){}
+const $=s=>document.querySelector(s);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function rankClass(r){return r<=10?'r1':r<=100?'r2':r<=500?'r3':'r4'}
+
+function renderItem(it){
+  const ivSel=(i,label)=>`<label class="iv"><span>${label}</span><select data-iv="${i}">${Array.from({length:16},(_,v)=>`<option${v===it.iv[i]?' selected':''}>${v}</option>`).join('')}</select></label>`;
+  let body='';
+  if(it.species){
+    const maxIdx=maxIdxFor(state.maxLv);
+    const rows=family(it.species).map(s=>{
+      const cells=LEAGUES.map(lg=>{const r=rankOf(s,it.iv,lg,maxIdx);
+        if(!r)return `<td class="na">CP超過</td>`;
+        return `<td><b class="${rankClass(r.rank)}">${r.rank}位</b><small>${r.pct.toFixed(1)}%</small><small>CP${r.cp} Lv${r.lv}</small></td>`}).join('');
+      return `<tr><th>${esc(s.name)}</th>${cells}</tr>`}).join('');
+    body=`<table class="rk"><thead><tr><th></th>${LEAGUES.map(l=>`<th>${l.name}</th>`).join('')}</tr></thead><tbody>${rows}</tbody></table>`;
+  }else body=`<p class="hint">ポケモンを選ぶと順位が出ます</p>`;
+  return `<div class="card" data-id="${it.id}">
+    <div class="top">
+      ${it.thumb?`<img src="${it.thumb}" alt="">`:`<div class="noimg">手入力</div>`}
+      <div class="meta">
+        <div class="ivs">${ivSel(0,'攻撃')}${ivSel(1,'防御')}${ivSel(2,'HP')}</div>
+        <div class="sp"><div class="splabel">${it.species?(it.auto?'名前を自動判定（違えば入力し直し）':'ポケモン'):'↓ ポケモン名を入力して候補をタップ'}</div><input type="text" class="${it.species?'':'need'}" placeholder="例: ぽにーた" value="${it.species?esc(SP[it.species].name):''}" autocomplete="off"><div class="sug"></div>${formsOf(it)}</div>
+        ${it.t!=null?`<div class="tm">録画 ${it.t.toFixed(1)}秒</div>`:''}
+      </div>
+      <button class="del" title="削除">×</button>
+    </div>${body}</div>`;
+}
+function formsOf(it){if(!it.species)return '';const dex=SP[it.species].dex;const fs=SPLIST.filter(x=>x.dex===dex);if(fs.length<2)return '';
+  return `<div class="forms">${fs.map(f=>`<button data-sp="${f.id}" class="${f.id===it.species?'on':''}">${esc(f.name.replace(/^[^(]*/,'')||'通常')}</button>`).join('')}</div>`}
+function render(){
+  $('#list').innerHTML=state.items.map(renderItem).join('');
+  $('#empty').style.display=state.items.length?'none':'';
+  document.querySelectorAll('.lvbtn').forEach(b=>b.classList.toggle('on',+b.dataset.lv===state.maxLv));
+}
+function itemOf(el){const c=el.closest('.card');return c&&state.items.find(x=>x.id===+c.dataset.id)}
+function rerenderCard(it){const c=document.querySelector(`.card[data-id="${it.id}"]`);if(c)c.outerHTML=renderItem(it)}
+
+document.addEventListener('change',e=>{
+  if(e.target.dataset.iv!=null){const it=itemOf(e.target);it.iv[+e.target.dataset.iv]=+e.target.value;rerenderCard(it)}
+});
+document.addEventListener('input',e=>{
+  if(!e.target.closest('.sp'))return;
+  const box=e.target.parentNode.querySelector('.sug');
+  const res=searchSpecies(e.target.value);
+  box.innerHTML=res.map(s=>`<button data-sp="${s.id}">${esc(s.name)}</button>`).join('');
+});
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-sp]');
+  if(b){const it=itemOf(b);it.species=b.dataset.sp;it.auto=false;rerenderCard(it);return}
+  if(e.target.closest('.del')){const it=itemOf(e.target);state.items=state.items.filter(x=>x!==it);render();return}
+  const lv=e.target.closest('.lvbtn');
+  if(lv){state.maxLv=+lv.dataset.lv;try{localStorage.setItem('ivr_maxlv',state.maxLv)}catch(err){}render();return}
+});
+document.addEventListener('focusin',e=>{if(e.target.closest('.sp')&&e.target.tagName==='INPUT')e.target.select()});
+$('#add').onclick=()=>{state.items.push({id:state.next++,iv:[15,15,15],species:null,thumb:null,t:null});render();window.scrollTo(0,document.body.scrollHeight)};
+$('#clear').onclick=()=>{state.items=[];render()};
+
+// ---------- video analysis ----------
+function waitEv(el,ev,ms){return new Promise(res=>{let done=false;const f=()=>{if(done)return;done=true;el.removeEventListener(ev,f);res()};el.addEventListener(ev,f);if(ms)setTimeout(f,ms)})}
+async function seek(v,t){v.currentTime=t;await waitEv(v,'seeked',2000);if(v.requestVideoFrameCallback)await new Promise(r=>{let ok=false;v.requestVideoFrameCallback(()=>{ok=true;r()});setTimeout(()=>{if(!ok)r()},60)})}
+function frameStats(d){let sum=0,n=0;for(let i=0;i<d.length;i+=4*97){sum+=d[i]+d[i+1]+d[i+2];n++}return sum/n/3}
+// iPhone Safari: the video must be in the page and actually playing for frames to reach the canvas
+async function collect(v,onFrame,setPct){
+  const dur=v.duration;
+  if(v.requestVideoFrameCallback){
+    try{
+      v.currentTime=0;await waitEv(v,'seeked',1500);
+      v.playbackRate=2;let last=-1,count=0;
+      await new Promise((res,rej)=>{
+        let done=false;const fin=()=>{if(!done){done=true;res()}};
+        const cb=(now,meta)=>{if(done)return;const t=meta.mediaTime;if(t-last>=0.18){last=t;count++;onFrame(t);setPct(t/dur)}
+          if(!v.ended)v.requestVideoFrameCallback(cb)};
+        v.requestVideoFrameCallback(cb);v.addEventListener('ended',fin);
+        setTimeout(fin,(dur/2+15)*1000);
+        v.play().catch(rej);
+      });
+      v.pause();
+      if(count>=Math.min(5,dur*2))return 'play';
+    }catch(e){}
+  }
+  // fallback: seek frame by frame
+  for(let t=0.05;t<dur;t+=0.2){await seek(v,t);onFrame(t);setPct(t/dur)}
+  return 'seek';
+}
+async function analyze(file){
+  const st=$('#status'),bar=$('#prog');st.textContent='動画を読み込み中…';bar.style.width='0%';$('#progwrap').style.display='';$('#diag').innerHTML='';
+  const v=document.createElement('video');v.muted=true;v.defaultMuted=true;v.playsInline=true;v.setAttribute('playsinline','');v.setAttribute('muted','');v.preload='auto';
+  v.style.cssText='position:fixed;left:0;bottom:0;width:2px;height:2px;opacity:0.01;pointer-events:none';
+  document.body.appendChild(v);
+  v.src=URL.createObjectURL(file);
+  await waitEv(v,'loadedmetadata',10000);
+  if(!v.videoWidth){st.textContent='この動画は読み込めませんでした';v.remove();return}
+  await waitEv(v,'canplay',5000);
+  buildTemplates();
+  const W=400,H=Math.round(v.videoHeight*W/v.videoWidth);
+  const cv=document.createElement('canvas');cv.width=W;cv.height=H;const ctx=cv.getContext('2d',{willReadFrequently:true});
+  const W2=Math.min(v.videoWidth,800),H2=Math.round(v.videoHeight*W2/v.videoWidth);
+  const cv2=document.createElement('canvas');cv2.width=W2;cv2.height=H2;const ctx2=cv2.getContext('2d',{willReadFrequently:true});
+  const th=document.createElement('canvas');
+  const samples=[];let dark=0,mid=null,lastKey='',lastNameT=-9;
+  // everything is captured while the video plays: iPhone gives no picture after seeking
+  const mode=await collect(v,t=>{
+    ctx.drawImage(v,0,0,W,H);
+    const d=ctx.getImageData(0,0,W,H).data;
+    if(frameStats(d)<6)dark++;
+    const det=detectBars(d,W,H);
+    const s={t,det,sig:det?signature(d,W,H,det.top):null};
+    if(det){
+      const key=det.iv.join('/');
+      if(key!==lastKey||t-lastNameT>0.5){
+        lastKey=key;lastNameT=t;
+        ctx2.drawImage(v,0,0,W2,H2);
+        try{const r=readName(ctx2.getImageData(0,0,W2,H2).data,W2,H2,det.top*W2/W);if(r&&r.best)s.name={dex:r.best.dex,name:r.best.name,score:r.best.score}}catch(e){}
+        const h=Math.max(40,Math.round(det.top*0.6));th.width=160;th.height=Math.round(h*160/W);
+        th.getContext('2d').drawImage(cv,0,0,W,h,0,0,th.width,th.height);s.thumb=th.toDataURL('image/jpeg',0.75);
+      }
+    }
+    samples.push(s);
+    if(!mid&&t>v.duration*0.4)mid=cv.toDataURL('image/jpeg',0.6);
+  },p=>{bar.style.width=(p*100).toFixed(0)+'%';st.textContent=`解析中… ${Math.round(p*100)}%`});
+  const groups=groupSamples(samples);
+  let named=0;
+  for(const g of groups){
+    const inG=samples.filter(s=>s.det&&s.t>=g.t0-0.01&&s.t<=g.t1+0.01&&s.det.iv.join()===g.iv.join());
+    const votes={};for(const s of inG)if(s.name&&s.name.score>0.55){const k=s.name.dex;votes[k]=votes[k]||{n:0,score:0,dex:k};votes[k].n++;votes[k].score=Math.max(votes[k].score,s.name.score)}
+    const best=Object.values(votes).sort((a,b)=>b.n-a.n||b.score-a.score)[0];
+    const withThumb=inG.filter(s=>s.thumb);const tsm=withThumb.sort((a,b)=>Math.abs(a.t-g.t)-Math.abs(b.t-g.t))[0];
+    if(best)named++;
+    state.items.push({id:state.next++,iv:g.iv.slice(),species:best?baseIdOf(+best.dex):null,auto:!!best,score:best?best.score:null,thumb:tsm?tsm.thumb:null,t:g.t});
+  }
+  URL.revokeObjectURL(v.src);v.remove();
+  $('#progwrap').style.display='none';
+  const found=samples.filter(s=>s.det).length,tried=samples.filter(s=>s.name!==undefined||s.thumb).length,nm=samples.filter(s=>s.name&&s.name.score>0.55).length;
+  const info=`動画 ${v.videoWidth}×${v.videoHeight} / ${v.duration.toFixed(1)}秒 / 方式 ${mode} / 解析 ${samples.length}コマ / 暗いコマ ${dark} / バー検出 ${found}コマ / 名前判定 ${nm}/${tried}`;
+  if(groups.length){const na=groups.length-named;st.textContent=`${groups.length}匹見つかりました。`+(na?`名前を読めなかった${na}匹は、名前を入力してください。`:'');$('#diag').textContent=info}
+  else{
+    st.textContent=dark>samples.length*0.5?'動画のコマを取り出せませんでした（真っ黒）。この画面のスクショを送ってください。':'評価画面が見つかりませんでした。この画面のスクショを送ってください。';
+    $('#diag').innerHTML=esc(info)+(mid?`<br><img src="${mid}" style="width:120px;margin-top:6px;border-radius:6px">`:'');
+  }
+  render();
+}
+$('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)analyze(f).catch(err=>{$('#status').textContent='エラー: '+err.message});e.target.value=''});
+render();
+
+</script>
+</body></html>

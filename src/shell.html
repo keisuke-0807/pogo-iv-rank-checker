@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ポケGO 個体値ランクチェッカー</title>
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1d2329;--sub:#68737d;--line:#e3e7eb;--acc:#2b7de9;--g1:#b8860b;--g2:#1a8a4a;--g3:#2b6cb0;--g4:#7a848d}
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif;background:var(--bg);color:var(--ink);-webkit-text-size-adjust:100%}
+header{padding:18px 16px 8px}h1{font-size:19px;margin:0 0 4px}header p{margin:0;color:var(--sub);font-size:13px;line-height:1.5}
+.bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 16px 12px;position:sticky;top:0;background:var(--bg);z-index:5;border-bottom:1px solid var(--line)}
+.pick{background:var(--acc);color:#fff;border-radius:10px;padding:11px 16px;font-weight:600;font-size:15px;cursor:pointer}
+.pick input{display:none}
+.seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:#fff;margin-left:auto}
+.seg span{font-size:12px;color:var(--sub);padding:0 8px;align-self:center}
+.lvbtn{border:0;background:none;padding:8px 10px;font-size:13px;color:var(--sub)}.lvbtn.on{background:var(--acc);color:#fff}
+.sm{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 10px;font-size:13px;color:var(--ink)}
+#status{padding:8px 16px 0;font-size:13px;color:var(--sub);min-height:18px}
+#progwrap{margin:6px 16px 0;height:6px;background:var(--line);border-radius:3px;overflow:hidden}#prog{height:100%;background:var(--acc);width:0}
+#list{padding:10px 12px 40px;display:flex;flex-direction:column;gap:12px}
+#empty{margin:24px 16px;padding:16px;border:1px dashed #c5ccd3;border-radius:12px;color:var(--sub);font-size:14px;line-height:1.7}
+.card{background:var(--card);border-radius:14px;box-shadow:0 1px 3px rgba(0,0,0,.08);overflow:visible}
+.top{display:flex;gap:10px;padding:10px;position:relative}
+.top img,.noimg{width:96px;border-radius:9px;flex:none;object-fit:cover;align-self:flex-start}
+.noimg{height:72px;background:var(--line);display:grid;place-items:center;font-size:12px;color:var(--sub)}
+.meta{flex:1;min-width:0}
+.ivs{display:flex;gap:6px}
+.iv{display:flex;flex-direction:column;font-size:11px;color:var(--sub);gap:2px}
+.iv select{font-size:16px;font-weight:600;padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);min-width:52px}
+.sp{position:relative;margin-top:8px}
+.sp input{width:100%;font-size:16px;padding:8px 10px;border:1px solid var(--line);border-radius:8px}
+.sug{position:absolute;left:0;right:0;top:100%;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.15);z-index:9}
+.sug:empty{display:none}
+.sug button{display:block;width:100%;text-align:left;border:0;background:none;padding:10px 12px;font-size:15px;border-bottom:1px solid var(--line)}
+.splabel{font-size:11px;color:var(--sub);margin-bottom:3px}.sp input.need{border:2px solid #f0a040;background:#fff8ee}.forms{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.forms button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:3px 9px;font-size:12px;color:var(--sub)}.forms button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tm{font-size:11px;color:var(--sub);margin-top:6px}
+.del{position:absolute;top:6px;right:6px;border:0;background:none;font-size:20px;color:#a0a8b0;width:30px;height:30px}
+.hint{margin:0;padding:0 12px 12px;font-size:13px;color:var(--sub)}
+.rk{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+.rk th,.rk td{padding:7px 4px;border-top:1px solid var(--line);text-align:center;vertical-align:top}
+.rk thead th{font-size:11px;color:var(--sub);font-weight:600}
+.rk tbody th{text-align:left;padding-left:10px;font-weight:600;font-size:12px;word-break:break-all;width:27%}
+.rk td b{display:block;font-size:15px}.rk td small{display:block;color:var(--sub);font-size:10.5px;line-height:1.35}
+.na{color:#b0b7be}
+.r1{color:var(--g1)}.r2{color:var(--g2)}.r3{color:var(--g3)}.r4{color:var(--g4)}
+.legend{font-size:11px;color:var(--sub);padding:0 16px}
+.legend b{font-weight:600}
+</style></head><body>
+<header><h1>個体値ランクチェッカー <small style="font-size:11px;color:#8a949c;font-weight:400">v4</small></h1><p>ポケモンGOの「評価」画面を画面収録した動画から個体値を読み取り、スーパー・ハイパー・マスターで4096通り中何位かを進化先も含めて表示します。動画はこの端末の中だけで処理されます。</p></header>
+<div class="bar">
+<label class="pick">録画を選ぶ<input id="file" type="file" accept="video/*"></label>
+<button class="sm" id="add">手入力</button><button class="sm" id="clear">クリア</button>
+<div class="seg"><span>Lv上限</span><button class="lvbtn" data-lv="50">50</button><button class="lvbtn" data-lv="51">51</button></div>
+</div>
+<div id="status"></div><div id="diag" style="padding:4px 16px 0;font-size:11px;color:#8a949c"></div><div id="progwrap" style="display:none"><div id="prog"></div></div>
+<div id="empty"><b>使い方</b><br>1. ポケGOで画面収録を開始<br>2. ポケモンを開いて「評価」→バーが出たら1〜2秒待つ<br>3. 評価を開いたまま左右スワイプで次のポケモンへ<br>4. 録画を止めて「録画を選ぶ」から選択<br><br>順位はステータス積（攻撃×防御×HP）で比較しています。Lv上限51は相棒ボーナス込みです。</div>
+<p class="legend"><b class="r1">■</b>10位以内 <b class="r2">■</b>100位以内 <b class="r3">■</b>500位以内　%は1位比のステータス積</p>
+<div id="list"></div>
+<script>/*JS*/</script>
+</body></html>
