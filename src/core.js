@@ -85,24 +85,20 @@ function signature(d,W,H,top){
 function sigDist(a,b){let s=0;for(let i=0;i<a.length;i++)s+=Math.abs(a[i]-b[i]);return s/a.length}
 // samples: [{t, det:{iv,top}|null, sig}] -> individuals
 function groupSamples(samples){
-  const runs=[];let cur=null;
+  // 1) contiguous runs of the same reading (a missed frame does not break a run)
+  const runs=[];let cur=null,miss=0;
   for(const s of samples){
-    if(!s.det){cur=null;continue}
-    const key=s.det.iv.join('/');
-    if(cur&&(cur.last.key!==key)){
-      // value changed inside a run: new individual if picture also changed, else animation
-      if(sigDist(cur.last.sig,s.sig)>18){cur=null}
-    }
-    if(!cur){cur={items:[]};runs.push(cur)}
-    cur.items.push({t:s.t,key,iv:s.det.iv,sig:s.sig,top:s.det.top});cur.last=cur.items[cur.items.length-1];
+    if(!s.det){miss++;if(miss>2)cur=null;continue}
+    miss=0;const key=s.det.iv.join('/');
+    if(!cur||cur.key!==key){cur={key,iv:s.det.iv,items:[]};runs.push(cur)}
+    cur.items.push(s);
   }
-  // pick stable value per run (most frequent, ties -> later)
-  let out=runs.map(r=>{const cnt={};r.items.forEach((it,i)=>{cnt[it.key]=(cnt[it.key]||0)+1+i*1e-3});
-    const key=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0];const it=r.items.filter(x=>x.key===key);const mid=it[it.length>>1];
-    return {iv:mid.iv,t:mid.t,sig:mid.sig,top:mid.top,n:r.items.length,t0:r.items[0].t,t1:r.items[r.items.length-1].t};});
-  out=out.filter(r=>r.n>=2);
-  // merge neighbours that are the same individual (same IV and same picture)
-  const m=[];for(const r of out){const p=m[m.length-1];if(p&&p.iv.join()==r.iv.join()&&sigDist(p.sig,r.sig)<14){p.n+=r.n;p.t1=r.t1}else m.push(r)}
+  // 2) short runs are bar animations / swipes: drop them
+  let out=runs.filter(r=>r.items.length>=3).map(r=>{const mid=r.items[r.items.length>>1];
+    return {iv:r.iv,key:r.key,t:mid.t,sig:mid.sig,top:mid.det.top,n:r.items.length,t0:r.items[0].t,t1:r.items[r.items.length-1].t}});
+  // 3) same reading again right after a blip and same picture -> same individual
+  const m=[];for(const r of out){const p=m[m.length-1];
+    if(p&&p.key===r.key&&r.t0-p.t1<1.5&&sigDist(p.sig,r.sig)<14){p.n+=r.n;p.t1=r.t1}else m.push(r)}
   return m;
 }
 if(typeof module!=='undefined')module.exports={detectBars,signature,sigDist,groupSamples,cls};

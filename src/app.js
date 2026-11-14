@@ -41,8 +41,8 @@ function rankOf(s,iv,lg,maxIdx){
 }
 
 // ---------- state ----------
-const state={maxLv:50,items:[],next:1};
-try{const v=localStorage.getItem('ivr_maxlv');if(v)state.maxLv=+v}catch(e){}
+const state={maxLv:50,limit:200,items:[],next:1};
+try{const v=localStorage.getItem('ivr_maxlv');if(v)state.maxLv=+v;const l=localStorage.getItem('ivr_limit');if(l!=null)state.limit=+l}catch(e){}
 const $=s=>document.querySelector(s);
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function rankClass(r){return r<=10?'r1':r<=100?'r2':r<=500?'r3':'r4'}
@@ -72,8 +72,14 @@ function renderItem(it){
 }
 function formsOf(it){if(!it.species)return '';const dex=SP[it.species].dex;const fs=SPLIST.filter(x=>x.dex===dex);if(fs.length<2)return '';
   return `<div class="forms">${fs.map(f=>`<button data-sp="${f.id}" class="${f.id===it.species?'on':''}">${esc(f.name.replace(/^[^(]*/,'')||'通常')}</button>`).join('')}</div>`}
+function bestRank(it){if(!it.species)return null;const mi=maxIdxFor(state.maxLv);let b=Infinity;
+  for(const sp of family(it.species))for(const lg of LEAGUES){const r=rankOf(sp,it.iv,lg,mi);if(r&&r.rank<b)b=r.rank}return b}
+function visible(it){if(!state.limit||!it.species)return true;return bestRank(it)<=state.limit}
 function render(){
-  $('#list').innerHTML=state.items.map(renderItem).join('');
+  const vis=state.items.filter(visible),hid=state.items.length-vis.length;
+  $('#list').innerHTML=vis.map(renderItem).join('');
+  $('#hidden').textContent=hid?`${state.limit}位以内がない${hid}匹を非表示にしています`:'';
+  $('#limit').value=String(state.limit);
   $('#empty').style.display=state.items.length?'none':'';
   document.querySelectorAll('.lvbtn').forEach(b=>b.classList.toggle('on',+b.dataset.lv===state.maxLv));
 }
@@ -81,6 +87,7 @@ function itemOf(el){const c=el.closest('.card');return c&&state.items.find(x=>x.
 function rerenderCard(it){const c=document.querySelector(`.card[data-id="${it.id}"]`);if(c)c.outerHTML=renderItem(it)}
 
 document.addEventListener('change',e=>{
+  if(e.target.id==='limit'){state.limit=+e.target.value;try{localStorage.setItem('ivr_limit',state.limit)}catch(err){}render();return}
   if(e.target.dataset.iv!=null){const it=itemOf(e.target);it.iv[+e.target.dataset.iv]=+e.target.value;rerenderCard(it)}
 });
 document.addEventListener('input',e=>{
@@ -91,7 +98,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-sp]');
-  if(b){const it=itemOf(b);it.species=b.dataset.sp;it.auto=false;rerenderCard(it);return}
+  if(b){const it=itemOf(b);it.species=b.dataset.sp;it.auto=false;render();return}
   if(e.target.closest('.del')){const it=itemOf(e.target);state.items=state.items.filter(x=>x!==it);render();return}
   const lv=e.target.closest('.lvbtn');
   if(lv){state.maxLv=+lv.dataset.lv;try{localStorage.setItem('ivr_maxlv',state.maxLv)}catch(err){}render();return}
@@ -184,5 +191,7 @@ async function analyze(file){
   }
   render();
 }
-$('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)analyze(f).catch(err=>{$('#status').textContent='エラー: '+err.message});e.target.value=''});
+$('#file').addEventListener('change',async e=>{const fs=[...e.target.files];e.target.value='';
+  for(let i=0;i<fs.length;i++){try{if(fs.length>1)$('#batch').textContent=`録画 ${i+1}/${fs.length}`;await analyze(fs[i])}catch(err){$('#status').textContent='エラー: '+err.message}}
+  $('#batch').textContent='';$('#status').textContent=`合計${state.items.length}匹`+(state.items.some(i=>!i.species)?'（名前を読めなかったものは入力してください）':'')});
 render();

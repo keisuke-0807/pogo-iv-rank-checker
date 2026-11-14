@@ -44,15 +44,17 @@ header{padding:18px 16px 8px}h1{font-size:19px;margin:0 0 4px}header p{margin:0;
 .legend{font-size:11px;color:var(--sub);padding:0 16px}
 .legend b{font-weight:600}
 </style></head><body>
-<header><h1>個体値ランクチェッカー <small style="font-size:11px;color:#8a949c;font-weight:400">v4</small></h1><p>ポケモンGOの「評価」画面を画面収録した動画から個体値を読み取り、スーパー・ハイパー・マスターで4096通り中何位かを進化先も含めて表示します。動画はこの端末の中だけで処理されます。</p></header>
+<header><h1>個体値ランクチェッカー <small style="font-size:11px;color:#8a949c;font-weight:400">v5</small></h1><p>ポケモンGOの「評価」画面を画面収録した動画から個体値を読み取り、スーパー・ハイパー・マスターで4096通り中何位かを進化先も含めて表示します。動画はこの端末の中だけで処理されます。</p></header>
 <div class="bar">
-<label class="pick">録画を選ぶ<input id="file" type="file" accept="video/*"></label>
+<label class="pick">録画を選ぶ<input id="file" type="file" accept="video/*" multiple></label>
 <button class="sm" id="add">手入力</button><button class="sm" id="clear">クリア</button>
+<select id="limit" class="sm"><option value="100">100位以内</option><option value="200">200位以内</option><option value="500">500位以内</option><option value="0">すべて表示</option></select>
 <div class="seg"><span>Lv上限</span><button class="lvbtn" data-lv="50">50</button><button class="lvbtn" data-lv="51">51</button></div>
 </div>
-<div id="status"></div><div id="diag" style="padding:4px 16px 0;font-size:11px;color:#8a949c"></div><div id="progwrap" style="display:none"><div id="prog"></div></div>
-<div id="empty"><b>使い方</b><br>1. ポケGOで画面収録を開始<br>2. ポケモンを開いて「評価」→バーが出たら1〜2秒待つ<br>3. 評価を開いたまま左右スワイプで次のポケモンへ<br>4. 録画を止めて「録画を選ぶ」から選択<br><br>順位はステータス積（攻撃×防御×HP）で比較しています。Lv上限51は相棒ボーナス込みです。</div>
+<div id="batch" style="padding:8px 16px 0;font-size:13px;font-weight:600"></div><div id="status"></div><div id="diag" style="padding:4px 16px 0;font-size:11px;color:#8a949c"></div><div id="progwrap" style="display:none"><div id="prog"></div></div>
+<div id="empty"><b>使い方</b><br>1. ポケGOで画面収録を開始<br>2. ポケモンを開いて「評価」→バーが出たら1〜2秒待つ<br>3. 評価を開いたまま左右スワイプで次のポケモンへ<br>4. 録画を止めて「録画を選ぶ」から選択（複数の録画をまとめて選べます）<br><br>順位はステータス積（攻撃×防御×HP）で比較しています。Lv上限51は相棒ボーナス込みです。</div>
 <p class="legend"><b class="r1">■</b>10位以内 <b class="r2">■</b>100位以内 <b class="r3">■</b>500位以内　%は1位比のステータス積</p>
+<div id="hidden" style="padding:6px 16px 0;font-size:12px;color:#8a949c"></div>
 <div id="list"></div>
 <script>/*JS*/</script>
 </body></html>

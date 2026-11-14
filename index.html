@@ -44,15 +44,17 @@ header{padding:18px 16px 8px}h1{font-size:19px;margin:0 0 4px}header p{margin:0;
 .legend{font-size:11px;color:var(--sub);padding:0 16px}
 .legend b{font-weight:600}
 </style></head><body>
-<header><h1>個体値ランクチェッカー <small style="font-size:11px;color:#8a949c;font-weight:400">v4</small></h1><p>ポケモンGOの「評価」画面を画面収録した動画から個体値を読み取り、スーパー・ハイパー・マスターで4096通り中何位かを進化先も含めて表示します。動画はこの端末の中だけで処理されます。</p></header>
+<header><h1>個体値ランクチェッカー <small style="font-size:11px;color:#8a949c;font-weight:400">v5</small></h1><p>ポケモンGOの「評価」画面を画面収録した動画から個体値を読み取り、スーパー・ハイパー・マスターで4096通り中何位かを進化先も含めて表示します。動画はこの端末の中だけで処理されます。</p></header>
 <div class="bar">
-<label class="pick">録画を選ぶ<input id="file" type="file" accept="video/*"></label>
+<label class="pick">録画を選ぶ<input id="file" type="file" accept="video/*" multiple></label>
 <button class="sm" id="add">手入力</button><button class="sm" id="clear">クリア</button>
+<select id="limit" class="sm"><option value="100">100位以内</option><option value="200">200位以内</option><option value="500">500位以内</option><option value="0">すべて表示</option></select>
 <div class="seg"><span>Lv上限</span><button class="lvbtn" data-lv="50">50</button><button class="lvbtn" data-lv="51">51</button></div>
 </div>
-<div id="status"></div><div id="diag" style="padding:4px 16px 0;font-size:11px;color:#8a949c"></div><div id="progwrap" style="display:none"><div id="prog"></div></div>
-<div id="empty"><b>使い方</b><br>1. ポケGOで画面収録を開始<br>2. ポケモンを開いて「評価」→バーが出たら1〜2秒待つ<br>3. 評価を開いたまま左右スワイプで次のポケモンへ<br>4. 録画を止めて「録画を選ぶ」から選択<br><br>順位はステータス積（攻撃×防御×HP）で比較しています。Lv上限51は相棒ボーナス込みです。</div>
+<div id="batch" style="padding:8px 16px 0;font-size:13px;font-weight:600"></div><div id="status"></div><div id="diag" style="padding:4px 16px 0;font-size:11px;color:#8a949c"></div><div id="progwrap" style="display:none"><div id="prog"></div></div>
+<div id="empty"><b>使い方</b><br>1. ポケGOで画面収録を開始<br>2. ポケモンを開いて「評価」→バーが出たら1〜2秒待つ<br>3. 評価を開いたまま左右スワイプで次のポケモンへ<br>4. 録画を止めて「録画を選ぶ」から選択（複数の録画をまとめて選べます）<br><br>順位はステータス積（攻撃×防御×HP）で比較しています。Lv上限51は相棒ボーナス込みです。</div>
 <p class="legend"><b class="r1">■</b>10位以内 <b class="r2">■</b>100位以内 <b class="r3">■</b>500位以内　%は1位比のステータス積</p>
+<div id="hidden" style="padding:6px 16px 0;font-size:12px;color:#8a949c"></div>
 <div id="list"></div>
 <script>const JA_NAMES="フシギダネ,フシギソウ,フシギバナ,ヒトカゲ,リザード,リザードン,ゼニガメ,カメール,カメックス,キャタピー,トランセル,バタフリー,ビードル,コクーン,スピアー,ポッポ,ピジョン,ピジョット,コラッタ,ラッタ,オニスズメ,オニドリル,アーボ,アーボック,ピカチュウ,ライチュウ,サンド,サンドパン,ニドラン♀,ニドリーナ,ニドクイン,ニドラン♂,ニドリーノ,ニドキング,ピッピ,ピクシー,ロコン,キュウコン,プリン,プクリン,ズバット,ゴルバット,ナゾノクサ,クサイハナ,ラフレシア,パラス,パラセクト,コンパン,モルフォン,ディグダ,ダグトリオ,ニャース,ペルシアン,コダック,ゴルダック,マンキー,オコリザル,ガーディ,ウインディ,ニョロモ,ニョロゾ,ニョロボン,ケーシィ,ユンゲラー,フーディン,ワンリキー,ゴーリキー,カイリキー,マダツボミ,ウツドン,ウツボット,メノクラゲ,ドククラゲ,イシツブテ,ゴローン,ゴローニャ,ポニータ,ギャロップ,ヤドン,ヤドラン,コイル,レアコイル,カモネギ,ドードー,ドードリオ,パウワウ,ジュゴン,ベトベター,ベトベトン,シェルダー,パルシェン,ゴース,ゴースト,ゲンガー,イワーク,スリープ,スリーパー,クラブ,キングラー,ビリリダマ,マルマイン,タマタマ,ナッシー,カラカラ,ガラガラ,サワムラー,エビワラー,ベロリンガ,ドガース,マタドガス,サイホーン,サイドン,ラッキー,モンジャラ,ガルーラ,タッツー,シードラ,トサキント,アズマオウ,ヒトデマン,スターミー,バリヤード,ストライク,ルージュラ,エレブー,ブーバー,カイロス,ケンタロス,コイキング,ギャラドス,ラプラス,メタモン,イーブイ,シャワーズ,サンダース,ブースター,ポリゴン,オムナイト,オムスター,カブト,カブトプス,プテラ,カビゴン,フリーザー,サンダー,ファイヤー,ミニリュウ,ハクリュー,カイリュー,ミュウツー,ミュウ,チコリータ,ベイリーフ,メガニウム,ヒノアラシ,マグマラシ,バクフーン,ワニノコ,アリゲイツ,オーダイル,オタチ,オオタチ,ホーホー,ヨルノズク,レディバ,レディアン,イトマル,アリアドス,クロバット,チョンチー,ランターン,ピチュー,ピィ,ププリン,トゲピー,トゲチック,ネイティ,ネイティオ,メリープ,モココ,デンリュウ,キレイハナ,マリル,マリルリ,ウソッキー,ニョロトノ,ハネッコ,ポポッコ,ワタッコ,エイパム,ヒマナッツ,キマワリ,ヤンヤンマ,ウパー,ヌオー,エーフィ,ブラッキー,ヤミカラス,ヤドキング,ムウマ,アンノーン,ソーナンス,キリンリキ,クヌギダマ,フォレトス,ノコッチ,グライガー,ハガネール,ブルー,グランブル,ハリーセン,ハッサム,ツボツボ,ヘラクロス,ニューラ,ヒメグマ,リングマ,マグマッグ,マグカルゴ,ウリムー,イノムー,サニーゴ,テッポウオ,オクタン,デリバード,マンタイン,エアームド,デルビル,ヘルガー,キングドラ,ゴマゾウ,ドンファン,ポリゴン２,オドシシ,ドーブル,バルキー,カポエラー,ムチュール,エレキッド,ブビィ,ミルタンク,ハピナス,ライコウ,エンテイ,スイクン,ヨーギラス,サナギラス,バンギラス,ルギア,ホウオウ,セレビィ,キモリ,ジュプトル,ジュカイン,アチャモ,ワカシャモ,バシャーモ,ミズゴロウ,ヌマクロー,ラグラージ,ポチエナ,グラエナ,ジグザグマ,マッスグマ,ケムッソ,カラサリス,アゲハント,マユルド,ドクケイル,ハスボー,ハスブレロ,ルンパッパ,タネボー,コノハナ,ダーテング,スバメ,オオスバメ,キャモメ,ペリッパー,ラルトス,キルリア,サーナイト,アメタマ,アメモース,キノココ,キノガッサ,ナマケロ,ヤルキモノ,ケッキング,ツチニン,テッカニン,ヌケニン,ゴニョニョ,ドゴーム,バクオング,マクノシタ,ハリテヤマ,ルリリ,ノズパス,エネコ,エネコロロ,ヤミラミ,クチート,ココドラ,コドラ,ボスゴドラ,アサナン,チャーレム,ラクライ,ライボルト,プラスル,マイナン,バルビート,イルミーゼ,ロゼリア,ゴクリン,マルノーム,キバニア,サメハダー,ホエルコ,ホエルオー,ドンメル,バクーダ,コータス,バネブー,ブーピッグ,パッチール,ナックラー,ビブラーバ,フライゴン,サボネア,ノクタス,チルット,チルタリス,ザングース,ハブネーク,ルナトーン,ソルロック,ドジョッチ,ナマズン,ヘイガニ,シザリガー,ヤジロン,ネンドール,リリーラ,ユレイドル,アノプス,アーマルド,ヒンバス,ミロカロス,ポワルン,カクレオン,カゲボウズ,ジュペッタ,ヨマワル,サマヨール,トロピウス,チリーン,アブソル,ソーナノ,ユキワラシ,オニゴーリ,タマザラシ,トドグラー,トドゼルガ,パールル,ハンテール,サクラビス,ジーランス,ラブカス,タツベイ,コモルー,ボーマンダ,ダンバル,メタング,メタグロス,レジロック,レジアイス,レジスチル,ラティアス,ラティオス,カイオーガ,グラードン,レックウザ,ジラーチ,デオキシス,ナエトル,ハヤシガメ,ドダイトス,ヒコザル,モウカザル,ゴウカザル,ポッチャマ,ポッタイシ,エンペルト,ムックル,ムクバード,ムクホーク,ビッパ,ビーダル,コロボーシ,コロトック,コリンク,ルクシオ,レントラー,スボミー,ロズレイド,ズガイドス,ラムパルド,タテトプス,トリデプス,ミノムッチ,ミノマダム,ガーメイル,ミツハニー,ビークイン,パチリス,ブイゼル,フローゼル,チェリンボ,チェリム,カラナクシ,トリトドン,エテボース,フワンテ,フワライド,ミミロル,ミミロップ,ムウマージ,ドンカラス,ニャルマー,ブニャット,リーシャン,スカンプー,スカタンク,ドーミラー,ドータクン,ウソハチ,マネネ,ピンプク,ペラップ,ミカルゲ,フカマル,ガバイト,ガブリアス,ゴンベ,リオル,ルカリオ,ヒポポタス,カバルドン,スコルピ,ドラピオン,グレッグル,ドクロッグ,マスキッパ,ケイコウオ,ネオラント,タマンタ,ユキカブリ,ユキノオー,マニューラ,ジバコイル,ベロベルト,ドサイドン,モジャンボ,エレキブル,ブーバーン,トゲキッス,メガヤンマ,リーフィア,グレイシア,グライオン,マンムー,ポリゴンＺ,エルレイド,ダイノーズ,ヨノワール,ユキメノコ,ロトム,ユクシー,エムリット,アグノム,ディアルガ,パルキア,ヒードラン,レジギガス,ギラティナ,クレセリア,フィオネ,マナフィ,ダークライ,シェイミ,アルセウス,ビクティニ,ツタージャ,ジャノビー,ジャローダ,ポカブ,チャオブー,エンブオー,ミジュマル,フタチマル,ダイケンキ,ミネズミ,ミルホッグ,ヨーテリー,ハーデリア,ムーランド,チョロネコ,レパルダス,ヤナップ,ヤナッキー,バオップ,バオッキー,ヒヤップ,ヒヤッキー,ムンナ,ムシャーナ,マメパト,ハトーボー,ケンホロウ,シママ,ゼブライカ,ダンゴロ,ガントル,ギガイアス,コロモリ,ココロモリ,モグリュー,ドリュウズ,タブンネ,ドッコラー,ドテッコツ,ローブシン,オタマロ,ガマガル,ガマゲロゲ,ナゲキ,ダゲキ,クルミル,クルマユ,ハハコモリ,フシデ,ホイーガ,ペンドラー,モンメン,エルフーン,チュリネ,ドレディア,バスラオ,メグロコ,ワルビル,ワルビアル,ダルマッカ,ヒヒダルマ,マラカッチ,イシズマイ,イワパレス,ズルッグ,ズルズキン,シンボラー,デスマス,デスカーン,プロトーガ,アバゴーラ,アーケン,アーケオス,ヤブクロン,ダストダス,ゾロア,ゾロアーク,チラーミィ,チラチーノ,ゴチム,ゴチミル,ゴチルゼル,ユニラン,ダブラン,ランクルス,コアルヒー,スワンナ,バニプッチ,バニリッチ,バイバニラ,シキジカ,メブキジカ,エモンガ,カブルモ,シュバルゴ,タマゲタケ,モロバレル,プルリル,ブルンゲル,ママンボウ,バチュル,デンチュラ,テッシード,ナットレイ,ギアル,ギギアル,ギギギアル,シビシラス,シビビール,シビルドン,リグレー,オーベム,ヒトモシ,ランプラー,シャンデラ,キバゴ,オノンド,オノノクス,クマシュン,ツンベアー,フリージオ,チョボマキ,アギルダー,マッギョ,コジョフー,コジョンド,クリムガン,ゴビット,ゴルーグ,コマタナ,キリキザン,バッフロン,ワシボン,ウォーグル,バルチャイ,バルジーナ,クイタラン,アイアント,モノズ,ジヘッド,サザンドラ,メラルバ,ウルガモス,コバルオン,テラキオン,ビリジオン,トルネロス,ボルトロス,レシラム,ゼクロム,ランドロス,キュレム,ケルディオ,メロエッタ,ゲノセクト,ハリマロン,ハリボーグ,ブリガロン,フォッコ,テールナー,マフォクシー,ケロマツ,ゲコガシラ,ゲッコウガ,ホルビー,ホルード,ヤヤコマ,ヒノヤコマ,ファイアロー,コフキムシ,コフーライ,ビビヨン,シシコ,カエンジシ,フラベベ,フラエッテ,フラージェス,メェークル,ゴーゴート,ヤンチャム,ゴロンダ,トリミアン,ニャスパー,ニャオニクス,ヒトツキ,ニダンギル,ギルガルド,シュシュプ,フレフワン,ペロッパフ,ペロリーム,マーイーカ,カラマネロ,カメテテ,ガメノデス,クズモー,ドラミドロ,ウデッポウ,ブロスター,エリキテル,エレザード,チゴラス,ガチゴラス,アマルス,アマルルガ,ニンフィア,ルチャブル,デデンネ,メレシー,ヌメラ,ヌメイル,ヌメルゴン,クレッフィ,ボクレー,オーロット,バケッチャ,パンプジン,カチコール,クレベース,オンバット,オンバーン,ゼルネアス,イベルタル,ジガルデ,ディアンシー,フーパ,ボルケニオン,モクロー,フクスロー,ジュナイパー,ニャビー,ニャヒート,ガオガエン,アシマリ,オシャマリ,アシレーヌ,ツツケラ,ケララッパ,ドデカバシ,ヤングース,デカグース,アゴジムシ,デンヂムシ,クワガノン,マケンカニ,ケケンカニ,オドリドリ,アブリー,アブリボン,イワンコ,ルガルガン,ヨワシ,ヒドイデ,ドヒドイデ,ドロバンコ,バンバドロ,シズクモ,オニシズクモ,カリキリ,ラランテス,ネマシュ,マシェード,ヤトウモリ,エンニュート,ヌイコグマ,キテルグマ,アマカジ,アママイコ,アマージョ,キュワワー,ヤレユータン,ナゲツケサル,コソクムシ,グソクムシャ,スナバァ,シロデスナ,ナマコブシ,タイプ：ヌル,シルヴァディ,メテノ,ネッコアラ,バクガメス,トゲデマル,ミミッキュ,ハギギシリ,ジジーロン,ダダリン,ジャラコ,ジャランゴ,ジャラランガ,カプ・コケコ,カプ・テテフ,カプ・ブルル,カプ・レヒレ,コスモッグ,コスモウム,ソルガレオ,ルナアーラ,ウツロイド,マッシブーン,フェローチェ,デンジュモク,テッカグヤ,カミツルギ,アクジキング,ネクロズマ,マギアナ,マーシャドー,ベベノム,アーゴヨン,ツンデツンデ,ズガドーン,ゼラオラ,メルタン,メルメタル,サルノリ,バチンキー,ゴリランダー,ヒバニー,ラビフット,エースバーン,メッソン,ジメレオン,インテレオン,ホシガリス,ヨクバリス,ココガラ,アオガラス,アーマーガア,サッチムシ,レドームシ,イオルブ,クスネ,フォクスライ,ヒメンカ,ワタシラガ,ウールー,バイウールー,カムカメ,カジリガメ,ワンパチ,パルスワン,タンドン,トロッゴン,セキタンザン,カジッチュ,アップリュー,タルップル,スナヘビ,サダイジャ,ウッウ,サシカマス,カマスジョー,エレズン,ストリンダー,ヤクデ,マルヤクデ,タタッコ,オトスパス,ヤバチャ,ポットデス,ミブリム,テブリム,ブリムオン,ベロバー,ギモー,オーロンゲ,タチフサグマ,ニャイキング,サニゴーン,ネギガナイト,バリコオル,デスバーン,マホミル,マホイップ,タイレーツ,バチンウニ,ユキハミ,モスノウ,イシヘンジン,コオリッポ,イエッサン,モルペコ,ゾウドウ,ダイオウドウ,パッチラゴン,パッチルドン,ウオノラゴン,ウオチルドン,ジュラルドン,ドラメシヤ,ドロンチ,ドラパルト,ザシアン,ザマゼンタ,ムゲンダイナ,ダクマ,ウーラオス,ザルード,レジエレキ,レジドラゴ,ブリザポス,レイスポス,バドレックス,アヤシシ,バサギリ,ガチグマ,イダイトウ,オオニューラ,ハリーマン,ラブトロス,ニャオハ,ニャローテ,マスカーニャ,ホゲータ,アチゲータ,ラウドボーン,クワッス,ウェルカモ,ウェーニバル,グルトン,パフュートン,タマンチュラ,ワナイダー,マメバッタ,エクスレッグ,パモ,パモット,パーモット,ワッカネズミ,イッカネズミ,パピモッチ,バウッツェル,ミニーブ,オリーニョ,オリーヴァ,イキリンコ,コジオ,ジオヅム,キョジオーン,カルボウ,グレンアルマ,ソウブレイズ,ズピカ,ハラバリー,カイデン,タイカイデン,オラチフ,マフィティフ,シルシュルー,タギングル,アノクサ,アノホラグサ,ノノクラゲ,リククラゲ,ガケガニ,カプサイジ,スコヴィラン,シガロコ,ベラカス,ヒラヒナ,クエスパトラ,カヌチャン,ナカヌチャン,デカヌチャン,ウミディグダ,ウミトリオ,オトシドリ,ナミイルカ,イルカマン,ブロロン,ブロロローム,モトトカゲ,ミミズズ,キラーメ,キラフロル,ボチ,ハカドッグ,カラミンゴ,アルクジラ,ハルクジラ,ミガルーサ,ヘイラッシャ,シャリタツ,コノヨザル,ドオー,リキキリン,ノココッチ,ドドゲザン,イダイナキバ,サケブシッポ,アラブルタケ,ハバタクカミ,チヲハウハネ,スナノケガワ,テツノワダチ,テツノツツミ,テツノカイナ,テツノコウベ,テツノドクガ,テツノイバラ,セビエ,セゴール,セグレイブ,コレクレー,サーフゴー,チオンジェン,パオジアン,ディンルー,イーユイ,トドロクツキ,テツノブジン,コライドン,ミライドン,ウネルミナモ,テツノイサハ,カミッチュ,チャデス,ヤバソチャ,イイネイヌ,マシマシラ,キチキギス,オーガポン,ブリジュラス,カミツオロチ,ウガツホムラ,タケルライコ,テツノイワオ,テツノカシラ,テラパゴス,モモワロウ".split(',');
 // dex|id|form|atk|def|hp|evolutions  (source: PvPoke game master)
@@ -1194,24 +1196,20 @@ function signature(d,W,H,top){
 function sigDist(a,b){let s=0;for(let i=0;i<a.length;i++)s+=Math.abs(a[i]-b[i]);return s/a.length}
 // samples: [{t, det:{iv,top}|null, sig}] -> individuals
 function groupSamples(samples){
-  const runs=[];let cur=null;
+  // 1) contiguous runs of the same reading (a missed frame does not break a run)
+  const runs=[];let cur=null,miss=0;
   for(const s of samples){
-    if(!s.det){cur=null;continue}
-    const key=s.det.iv.join('/');
-    if(cur&&(cur.last.key!==key)){
-      // value changed inside a run: new individual if picture also changed, else animation
-      if(sigDist(cur.last.sig,s.sig)>18){cur=null}
-    }
-    if(!cur){cur={items:[]};runs.push(cur)}
-    cur.items.push({t:s.t,key,iv:s.det.iv,sig:s.sig,top:s.det.top});cur.last=cur.items[cur.items.length-1];
+    if(!s.det){miss++;if(miss>2)cur=null;continue}
+    miss=0;const key=s.det.iv.join('/');
+    if(!cur||cur.key!==key){cur={key,iv:s.det.iv,items:[]};runs.push(cur)}
+    cur.items.push(s);
   }
-  // pick stable value per run (most frequent, ties -> later)
-  let out=runs.map(r=>{const cnt={};r.items.forEach((it,i)=>{cnt[it.key]=(cnt[it.key]||0)+1+i*1e-3});
-    const key=Object.keys(cnt).sort((p,q)=>cnt[q]-cnt[p])[0];const it=r.items.filter(x=>x.key===key);const mid=it[it.length>>1];
-    return {iv:mid.iv,t:mid.t,sig:mid.sig,top:mid.top,n:r.items.length,t0:r.items[0].t,t1:r.items[r.items.length-1].t};});
-  out=out.filter(r=>r.n>=2);
-  // merge neighbours that are the same individual (same IV and same picture)
-  const m=[];for(const r of out){const p=m[m.length-1];if(p&&p.iv.join()==r.iv.join()&&sigDist(p.sig,r.sig)<14){p.n+=r.n;p.t1=r.t1}else m.push(r)}
+  // 2) short runs are bar animations / swipes: drop them
+  let out=runs.filter(r=>r.items.length>=3).map(r=>{const mid=r.items[r.items.length>>1];
+    return {iv:r.iv,key:r.key,t:mid.t,sig:mid.sig,top:mid.det.top,n:r.items.length,t0:r.items[0].t,t1:r.items[r.items.length-1].t}});
+  // 3) same reading again right after a blip and same picture -> same individual
+  const m=[];for(const r of out){const p=m[m.length-1];
+    if(p&&p.key===r.key&&r.t0-p.t1<1.5&&sigDist(p.sig,r.sig)<14){p.n+=r.n;p.t1=r.t1}else m.push(r)}
   return m;
 }
 if(typeof module!=='undefined')module.exports={detectBars,signature,sigDist,groupSamples,cls};
@@ -1323,8 +1321,8 @@ function rankOf(s,iv,lg,maxIdx){
 }
 
 // ---------- state ----------
-const state={maxLv:50,items:[],next:1};
-try{const v=localStorage.getItem('ivr_maxlv');if(v)state.maxLv=+v}catch(e){}
+const state={maxLv:50,limit:200,items:[],next:1};
+try{const v=localStorage.getItem('ivr_maxlv');if(v)state.maxLv=+v;const l=localStorage.getItem('ivr_limit');if(l!=null)state.limit=+l}catch(e){}
 const $=s=>document.querySelector(s);
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function rankClass(r){return r<=10?'r1':r<=100?'r2':r<=500?'r3':'r4'}
@@ -1354,8 +1352,14 @@ function renderItem(it){
 }
 function formsOf(it){if(!it.species)return '';const dex=SP[it.species].dex;const fs=SPLIST.filter(x=>x.dex===dex);if(fs.length<2)return '';
   return `<div class="forms">${fs.map(f=>`<button data-sp="${f.id}" class="${f.id===it.species?'on':''}">${esc(f.name.replace(/^[^(]*/,'')||'通常')}</button>`).join('')}</div>`}
+function bestRank(it){if(!it.species)return null;const mi=maxIdxFor(state.maxLv);let b=Infinity;
+  for(const sp of family(it.species))for(const lg of LEAGUES){const r=rankOf(sp,it.iv,lg,mi);if(r&&r.rank<b)b=r.rank}return b}
+function visible(it){if(!state.limit||!it.species)return true;return bestRank(it)<=state.limit}
 function render(){
-  $('#list').innerHTML=state.items.map(renderItem).join('');
+  const vis=state.items.filter(visible),hid=state.items.length-vis.length;
+  $('#list').innerHTML=vis.map(renderItem).join('');
+  $('#hidden').textContent=hid?`${state.limit}位以内がない${hid}匹を非表示にしています`:'';
+  $('#limit').value=String(state.limit);
   $('#empty').style.display=state.items.length?'none':'';
   document.querySelectorAll('.lvbtn').forEach(b=>b.classList.toggle('on',+b.dataset.lv===state.maxLv));
 }
@@ -1363,6 +1367,7 @@ function itemOf(el){const c=el.closest('.card');return c&&state.items.find(x=>x.
 function rerenderCard(it){const c=document.querySelector(`.card[data-id="${it.id}"]`);if(c)c.outerHTML=renderItem(it)}
 
 document.addEventListener('change',e=>{
+  if(e.target.id==='limit'){state.limit=+e.target.value;try{localStorage.setItem('ivr_limit',state.limit)}catch(err){}render();return}
   if(e.target.dataset.iv!=null){const it=itemOf(e.target);it.iv[+e.target.dataset.iv]=+e.target.value;rerenderCard(it)}
 });
 document.addEventListener('input',e=>{
@@ -1373,7 +1378,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('click',e=>{
   const b=e.target.closest('[data-sp]');
-  if(b){const it=itemOf(b);it.species=b.dataset.sp;it.auto=false;rerenderCard(it);return}
+  if(b){const it=itemOf(b);it.species=b.dataset.sp;it.auto=false;render();return}
   if(e.target.closest('.del')){const it=itemOf(e.target);state.items=state.items.filter(x=>x!==it);render();return}
   const lv=e.target.closest('.lvbtn');
   if(lv){state.maxLv=+lv.dataset.lv;try{localStorage.setItem('ivr_maxlv',state.maxLv)}catch(err){}render();return}
@@ -1466,7 +1471,9 @@ async function analyze(file){
   }
   render();
 }
-$('#file').addEventListener('change',e=>{const f=e.target.files[0];if(f)analyze(f).catch(err=>{$('#status').textContent='エラー: '+err.message});e.target.value=''});
+$('#file').addEventListener('change',async e=>{const fs=[...e.target.files];e.target.value='';
+  for(let i=0;i<fs.length;i++){try{if(fs.length>1)$('#batch').textContent=`録画 ${i+1}/${fs.length}`;await analyze(fs[i])}catch(err){$('#status').textContent='エラー: '+err.message}}
+  $('#batch').textContent='';$('#status').textContent=`合計${state.items.length}匹`+(state.items.some(i=>!i.species)?'（名前を読めなかったものは入力してください）':'')});
 render();
 
 </script>
